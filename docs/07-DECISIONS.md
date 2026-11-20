@@ -58,5 +58,8 @@ Confirmed.
 ### D17 — English UI; Hebrew only as user-entered content (Q9, clarified)
 The interface is English/LTR only: no translations, no i18n library, no RTL layout. Users will type Hebrew into task titles/descriptions, notes, shopping items and file descriptions, so free-text content must render and edit correctly: `dir="auto"` on text inputs/textareas and on elements displaying user content (so Hebrew lines are right-aligned and punctuation/mixed text behaves), a Hebrew-capable font fallback, and Hebrew test data. Search (`ILIKE`) works on Hebrew as-is. Consequences: no `@nuxtjs/i18n`; UI strings may be written inline.
 
+### D18 — npm instead of pnpm; Node 22 LTS pinned
+The user chose **npm** as the package manager (not pnpm). Node is pinned to 22 LTS via `.nvmrc` (exact version) and `engines` in `package.json`; `.npmrc` sets `engine-strict=true`. Nuxt 4 needs Node 20+, so the machine's Node 18 was replaced using nvm. All `pnpm` commands in the docs/plans mean `npm run ...`.
+
 ## Still open
 - **Q7 `@vite-pwa/nuxt` + Nuxt 4** is not explicitly confirmed; verified by the Phase 0 spike (FOUNDATION-011). Fallback: hand-written service worker + manifest.

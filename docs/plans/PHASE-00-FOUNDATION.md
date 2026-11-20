@@ -12,9 +12,9 @@ Approval of docs 01–04 and decisions D11–D17 in 07-DECISIONS.md (only Q7 rem
 Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `households`, `household_members`, `notes`, helper functions; RLS test harness; CI.
 
 ## Implementation
-- [ ] FOUNDATION-001: Initialize Nuxt 4 + TypeScript, pin Node/pnpm versions, ESLint, `.env.example`, `.gitignore`, git repo
+- [x] FOUNDATION-001: Initialize Nuxt 4 + TypeScript, pin Node version (npm, see D18), ESLint, `.env.example`, `.gitignore`, git repo
 - [ ] FOUNDATION-002: Tailwind v4 (`@tailwindcss/vite`) + shadcn-nuxt; add base components (Button, Input, Drawer, Dialog, Select, Sonner)
-- [ ] FOUNDATION-003: Supabase CLI init, local stack, `@nuxtjs/supabase` config, `pnpm db:types` script generating `types/database.types.ts`, typed `Database` client wiring (browser + server), CI check that types are up to date
+- [ ] FOUNDATION-003: Supabase CLI init, local stack, `@nuxtjs/supabase` config, `npm run db:types` script generating `types/database.types.ts`, typed `Database` client wiring (browser + server), CI check that types are up to date
 - [ ] FOUNDATION-004: Migration — `profiles` (+ signup trigger), `households`, `household_members` (unique user_id), `private.is_member()`
 - [ ] FOUNDATION-005: Migration — RPCs `create_household` (seeds nothing task/file-specific yet except household row, membership; seed hooks added in later phases) and `join_household`
 - [ ] FOUNDATION-006: Migration — `notes` table + RLS (private/shared)
@@ -39,7 +39,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [ ] CI green
 
 ## Verification
-Run `pnpm typecheck && pnpm lint && pnpm test && pnpm build`; run Playwright smoke; manual check on a real phone; confirm service role key absent from client bundle (grep build output).
+Run `npm run typecheck && npm run lint && npm test && npm run build`; run Playwright smoke; manual check on a real phone; confirm service role key absent from client bundle (grep build output).
 
 ## Definition of Done
 All tasks checked after verification, acceptance criteria met, docs updated to match reality, deployed.
