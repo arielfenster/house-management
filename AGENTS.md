@@ -1,6 +1,6 @@
 # AGENTS.md — Permanent Project Instructions
 
-Household management app. Read this first, then the relevant `plans/PHASE-*.md` and `docs/features/*.md`.
+Household management app. Read this first, then the relevant `docs/plans/PHASE-*.md` and `docs/features/*.md`.
 
 ## Stack
 Nuxt 4, Vue 3, TypeScript, Tailwind v4, shadcn-vue, Supabase (Postgres, Auth, Storage, RLS, Realtime), @vite-pwa/nuxt (injectManifest), web-push, Vitest, Playwright. Details: `docs/01-TECH-STACK.md`. Do not add dependencies without need; log significant ones in `docs/07-DECISIONS.md`.

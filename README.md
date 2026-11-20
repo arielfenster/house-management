@@ -6,5 +6,5 @@ Mobile-first app for managing a household: tasks & routines, files, shared shopp
 
 - Start with `docs/00-PROJECT-OVERVIEW.md`
 - Rules for AI agents: `AGENTS.md`
-- Progress and tasks: `plans/PHASE-*.md`
+- Progress and tasks: `docs/plans/PHASE-*.md`
 - Open decisions: `docs/07-DECISIONS.md`

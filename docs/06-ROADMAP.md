@@ -1,6 +1,6 @@
 # 06 — Roadmap
 
-Small vertical slices, each deployed when usable. Checkbox progress lives **only** in `plans/PHASE-*.md`.
+Small vertical slices, each deployed when usable. Checkbox progress lives **only** in `docs/plans/PHASE-*.md`.
 
 | Phase | Goal | Plan | Usable output |
 |---|---|---|---|
