@@ -30,7 +30,7 @@ Private-task **UI** is deferred (D15), but the policies below are implemented an
 | push_subscriptions | own | own | own | own |
 | reminder_log | none | service role | service role | service role |
 
-**Assignment ≠ access.** `assigned_to` is not consulted by any select policy. Private tasks may only be unassigned or self-assigned (DB check), so an assignee can never be granted access by accident. Shared tasks visible to both partners regardless of assignee.
+**Assignment ≠ access.** `assigned_to` is not consulted by any select policy. Private tasks may only be unassigned or self-assigned (DB check), so an assignee can never be granted access by accident. Shared tasks visible to both members regardless of assignee.
 
 ## Storage
 Private bucket `household-files`; object path `{household_id}/{file_id}/{name}`. `storage.objects` policies mirror table rules using `(storage.foldername(name))[1]::uuid` and `is_member`. Bucket enforces `file_size_limit` and `allowed_mime_types`. Access to content only through short-lived signed URLs (created as the user, so policies apply). Upload: client uploads directly to storage (policy-checked), then inserts metadata; a failed metadata insert triggers best-effort object removal. Delete: server route removes the object then the row.

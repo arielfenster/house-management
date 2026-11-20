@@ -32,7 +32,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 ## Acceptance Criteria
 - [ ] User can sign up, log in with email and password (no emails sent), log out
 - [ ] Hebrew text can be entered and displays correctly in user-content fields
-- [ ] Household can be created; partner can join with invite code
+- [ ] Household can be created; another user can join with invite code
 - [ ] Cross-household isolation and private/shared notes rules verified by automated tests
 - [ ] Four routes render; responsive navigation works on phone and desktop widths
 - [ ] Production deployment reachable over HTTPS (free-tier pause/backup behaviour documented, D12)

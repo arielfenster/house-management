@@ -47,7 +47,7 @@ Consequences/risks: (a) free projects are paused after a period of inactivity �
 Confirmed. See 08-DEPLOYMENT.md.
 
 ### D14 — Join by invite code (Q5)
-After signing up, the partner enters the household's invite code (or opens a shareable link `/join/<code>` that pre-fills it; if logged out, they sign in/up first and then return to the join step). The creator simply sends the code or link by any messenger. Codes are long and random, rotatable, and the join RPC rejects users already in a household.
+After signing up, the new member enters the household's invite code (or opens a shareable link `/join/<code>` that pre-fills it; if logged out, they sign in/up first and then return to the join step). The creator simply sends the code or link by any messenger. Codes are long and random, rotatable, and the join RPC rejects users already in a household.
 
 ### D15 — Private-task UI deferred (Q6)
 The database/RLS foundation (visibility, creator ownership, private-assignment rule) is still built and tested in Phase 1, but **no "Private" toggle or private-task UI ships in v1**; all tasks created from the UI are `shared`. To add later (see `features/TASKS.md` "Deferred"). Notes keep their private/shared columns with no UI.

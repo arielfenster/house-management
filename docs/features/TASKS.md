@@ -10,9 +10,9 @@ One-time and recurring tasks (daily/weekly/monthly/yearly/custom "every N units"
 Private-task UI (deferred, see below) — Subtasks, dependencies, kanban, priorities, estimates, calendar view, advanced recurrence (weekdays, nth-weekday), complex delegation.
 
 ## 4. User stories
-- As a partner I tick a task with one tap.
+- As a household member I tick a task with one tap.
 - I create "Clean AC filters" every 3 months, and see when it's due next and when it was last done.
-- I assign "Fix faucet" to my partner while we both still see it.
+- I assign "Fix faucet" to another member while we both still see it.
 - I create a new category from the task form without leaving it.
 
 ## 5. Main interactions
@@ -45,7 +45,7 @@ Implemented as pure functions in `shared/recurrence.ts`, exhaustively unit-teste
 - Option to keep the original schedule instead of completion-based due dates.
 
 ## 10. Edge cases
-Deleting a category/room clears references. Deleting a task deletes its history (confirm via undo toast). Assignee leaves household → assignment cleared. Task with no due date never appears Overdue. Concurrent completion by both partners: second completion within a short window is rejected/merged (RPC checks that task's `due_date` equals the one the client saw).
+Deleting a category/room clears references. Deleting a task deletes its history (confirm via undo toast). Assignee leaves household → assignment cleared. Task with no due date never appears Overdue. Concurrent completion by both members: second completion within a short window is rejected/merged (RPC checks that task's `due_date` equals the one the client saw).
 
 ## 11. Acceptance criteria
 - One-time & recurring tasks can be created, edited, deleted, completed.

@@ -1,6 +1,6 @@
 # House Management
 
-Mobile-first household app for two partners: tasks & routines, files, shared shopping list, and push reminders.
+Mobile-first app for managing a household: tasks & routines, files, shared shopping list, and push reminders.
 
 **Status:** planning complete, awaiting review — no application code yet.
 

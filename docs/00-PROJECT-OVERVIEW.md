@@ -1,6 +1,6 @@
 # 00 — Project Overview
 
-A mobile-first household management app for two partners sharing a home. Four pages, each with its own URL:
+A mobile-first household management app for the members of a household. Four pages, each with its own URL:
 
 | Route | Purpose |
 |---|---|

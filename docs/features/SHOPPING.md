@@ -12,7 +12,7 @@ Prices, quantities, inventory, product DB, barcodes, store integrations, analyti
 ## 4. User stories
 - I type "milk", Enter, "cheese", Enter — the input stays focused.
 - I paste 10 lines and get 10 items.
-- My partner adds eggs at home and I see it while shopping.
+- Another household member adds eggs at home and I see it while shopping.
 - I tick items as I walk through Produce.
 
 ## 5. Main interactions
@@ -28,7 +28,7 @@ Section = small bold/uppercase heading with subtle separator; items = plain rows
 Household members only (04).
 
 ## 9. Concurrency & ordering
-Optimistic local update, then write. Realtime events update local state; refetch on focus. Last-write-wins per row. Reordering writes only the moved row's `position` (midpoint of neighbours); positions are renormalized when gap < 1e-6. Two partners checking the same item converge to the last write. Realtime echo of own writes is ignored by id/version.
+Optimistic local update, then write. Realtime events update local state; refetch on focus. Last-write-wins per row. Reordering writes only the moved row's `position` (midpoint of neighbours); positions are renormalized when gap < 1e-6. Two members checking the same item converge to the last write. Realtime echo of own writes is ignored by id/version.
 
 ## 10. Edge cases
 Deleting a section deletes its items (undo toast) [Q8]. Items without a section go to an implicit top area. Empty/whitespace lines ignored on paste. Offline: show error toast and keep the text in the input (no queueing in v1). Very long lists render without pagination (small scale).
