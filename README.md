@@ -1,0 +1,10 @@
+# House Management
+
+Mobile-first household app for two partners: tasks & routines, files, shared shopping list, and push reminders.
+
+**Status:** planning complete, awaiting review — no application code yet.
+
+- Start with `docs/00-PROJECT-OVERVIEW.md`
+- Rules for AI agents: `AGENTS.md`
+- Progress and tasks: `plans/PHASE-*.md`
+- Open decisions: `docs/07-DECISIONS.md`
