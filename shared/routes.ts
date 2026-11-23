@@ -9,7 +9,14 @@ export const ROUTES = {
   onboarding: '/onboarding',
   /** Invite link prefix: `/join/<invite code>` (see `joinPath`). */
   join: '/join/',
+  tasks: '/tasks',
+  files: '/files',
+  shopping: '/shopping',
+  notifications: '/notifications',
 } as const
+
+/** Where members land: `/` redirects here (docs/05-UI-UX-GUIDELINES.md, no dashboard). */
+export const APP_HOME = ROUTES.tasks
 
 /** Query parameter carrying the page to return to after login/signup (`/login?redirect=/join/abc`). */
 export const REDIRECT_QUERY = 'redirect'

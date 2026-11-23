@@ -3,6 +3,10 @@ import * as v from 'valibot'
 import { REDIRECT_QUERY, ROUTES } from '#shared/routes'
 import { DISPLAY_NAME_MAX_LENGTH, PASSWORD_MIN_LENGTH, fieldErrors, safeRedirect, signupSchema } from '#shared/validation/auth'
 
+definePageMeta({
+  layout: false,
+})
+
 useHead({ title: 'Sign up' })
 
 const route = useRoute()

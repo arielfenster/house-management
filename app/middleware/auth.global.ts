@@ -1,8 +1,9 @@
-import { REDIRECT_QUERY, ROUTES, isAuthPage, isOnboardingPage } from '#shared/routes'
+import { APP_HOME, REDIRECT_QUERY, ROUTES, isAuthPage, isOnboardingPage } from '#shared/routes'
 import { safeRedirect } from '#shared/validation/auth'
 
 /**
- * Routing gate: signed out → login; signed in without a household → onboarding; else the app.
+ * Routing gate: signed out → login; signed in without a household → onboarding; else the app
+ * (`/` → APP_HOME).
  * This is UX only. Data access is authorized by RLS (docs/04-AUTHORIZATION.md).
  */
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -31,7 +32,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (isAuthPage(to.path) || isOnboardingPage(to.path)) {
-    const target = isAuthPage(to.path) ? safeRedirect(to.query[REDIRECT_QUERY]) : ROUTES.home
-    return navigateTo(isAuthPage(target) || isOnboardingPage(target) ? ROUTES.home : target)
+    const target = isAuthPage(to.path) ? safeRedirect(to.query[REDIRECT_QUERY], APP_HOME) : APP_HOME
+    return navigateTo(isAuthPage(target) || isOnboardingPage(target) || target === ROUTES.home ? APP_HOME : target)
+  }
+
+  if (to.path === ROUTES.home) {
+    return navigateTo(APP_HOME, { replace: true })
   }
 })

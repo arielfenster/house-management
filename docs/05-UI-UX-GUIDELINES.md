@@ -9,6 +9,7 @@ The UI is English/LTR only. User-entered text may be Hebrew: use `dir="auto"` on
 - Mobile: fixed bottom bar, 4 items (Tasks, Files, Shopping, Notifications), icon + label, clear active state, `padding-bottom: env(safe-area-inset-bottom)`.
 - Desktop (≥ md): compact left sidebar, same 4 items; content max-width ~ 720px for lists (not stretched).
 - `/` redirects to `/tasks`. No dashboard, no sub-navigation.
+- Household & account (name, invite link/code, log out) live in one **account sheet** (`AccountSheet`, a `ResponsiveSheet`), opened from the page header icon on mobile and the sidebar footer on desktop — not a fifth nav item.
 - Page header is small (title + 1–2 actions). No oversized headings.
 
 ## Visual style

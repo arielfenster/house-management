@@ -2,13 +2,17 @@
 import * as v from 'valibot';
 import { toast } from 'vue-sonner';
 import type { Household } from '~/composables/use-household';
-import { INVITE_CODE_QUERY, ROUTES } from '#shared/routes';
+import { APP_HOME, INVITE_CODE_QUERY } from '#shared/routes';
 import { fieldErrors } from '#shared/validation/auth';
 import {
 	HOUSEHOLD_NAME_MAX_LENGTH,
 	createHouseholdSchema,
 	joinHouseholdSchema,
 } from '#shared/validation/household';
+
+definePageMeta({
+	layout: false,
+});
 
 type Mode = 'create' | 'join';
 
@@ -47,7 +51,7 @@ function setMode(next: Mode) {
 async function handleFailure(message: string, alreadyMember: boolean) {
 	if (alreadyMember) {
 		// Joined or created in another tab: just go to the app.
-		await navigateTo(ROUTES.home);
+		await navigateTo(APP_HOME);
 		return;
 	}
 	formError.value = message;
@@ -71,7 +75,7 @@ async function submitCreate() {
 	created.value = await fetchHousehold(result.householdId);
 	pending.value = false;
 	if (!created.value) {
-		await navigateTo(ROUTES.home);
+		await navigateTo(APP_HOME);
 	}
 }
 
@@ -91,7 +95,7 @@ async function submitJoin() {
 		return;
 	}
 	toast.success('You joined the household');
-	await navigateTo(ROUTES.home);
+	await navigateTo(APP_HOME);
 }
 </script>
 
@@ -99,7 +103,7 @@ async function submitJoin() {
 	<AuthCard :title="created ? 'Household created' : 'Set up your household'">
 		<div v-if="created" class="space-y-6">
 			<HouseholdInvite :household-name="created.name" :invite-code="created.inviteCode" />
-			<Button class="w-full" @click="navigateTo(ROUTES.home)"> Continue </Button>
+			<Button class="w-full" @click="navigateTo(APP_HOME)"> Continue </Button>
 		</div>
 
 		<template v-else>
