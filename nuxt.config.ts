@@ -4,10 +4,17 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', 'shadcn-nuxt'],
+  modules: ['@nuxt/eslint', 'shadcn-nuxt', '@nuxtjs/supabase'],
   css: ['~/assets/css/tailwind.css'],
   vite: {
     plugins: [tailwindcss()],
+  },
+  supabase: {
+    // Typed client everywhere: useSupabaseClient() / serverSupabaseClient(event) get this Database type.
+    types: '~~/types/database.types.ts',
+    // Route protection is implemented by our own middleware in FOUNDATION-008
+    // (login -> onboarding -> app), so the module's built-in redirect is off.
+    redirect: false,
   },
   shadcn: {
     prefix: '',

@@ -12,7 +12,7 @@ Supabase free projects are paused after about a week without activity (unverifie
 | Var | Scope |
 |---|---|
 | `SUPABASE_URL`, `SUPABASE_KEY` (publishable/anon) | public/runtime |
-| `SUPABASE_SERVICE_KEY` | server only |
+| `SUPABASE_SECRET_KEY` (service role; `@nuxtjs/supabase` v2 name, replaces deprecated `SUPABASE_SERVICE_KEY`) | server only |
 | `VAPID_PUBLIC_KEY` (public), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | private except public key |
 | `CRON_SECRET` | server only; also stored in Supabase Vault for the pg_net job |
 

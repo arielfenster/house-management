@@ -61,5 +61,8 @@ The interface is English/LTR only: no translations, no i18n library, no RTL layo
 ### D18 — npm instead of pnpm; Node 22 LTS pinned
 The user chose **npm** as the package manager (not pnpm). Node is pinned to 22 LTS via `.nvmrc` (exact version) and `engines` in `package.json`; `.npmrc` sets `engine-strict=true`. Nuxt 4 needs Node 20+, so the machine's Node 18 was replaced using nvm. All `pnpm` commands in the docs/plans mean `npm run ...`.
 
+### D19 — Supabase wiring conventions (FOUNDATION-003)
+Supabase CLI is a pinned devDependency (`npx supabase`), local stack via `npm run db:start`. Types: `npm run db:types` writes `types/database.types.ts` (repo root, referenced as `~~/types/database.types.ts`; `~` would point at `app/` in Nuxt 4); `npm run db:types:check` fails when it is stale and runs in CI. `@nuxtjs/supabase` `types` option makes `useSupabaseClient()` and `serverSupabaseClient(event)` typed (verified: unknown tables fail typecheck in both). `h3` is a direct dependency pinned to 1.x: `@nuxtjs/supabase` imports `h3` without declaring it, and a transitive h3 2.x (from `@nuxt/eslint`) was hoisted to the top level and broke server-side session reading (`event.req.headers.get is not a function`); revisit when Nuxt moves to h3 2. Env var for the service role is `SUPABASE_SECRET_KEY` (module v2; `SUPABASE_SERVICE_KEY` is deprecated). The module's built-in redirect is **off**; our own middleware does login → onboarding → app (FOUNDATION-008). 2026-11-23.
+
 ## Still open
 - **Q7 `@vite-pwa/nuxt` + Nuxt 4** is not explicitly confirmed; verified by the Phase 0 spike (FOUNDATION-011). Fallback: hand-written service worker + manifest.
