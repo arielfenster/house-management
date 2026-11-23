@@ -33,6 +33,8 @@ Private-task **UI** is deferred (D15), but the policies below are implemented an
 | push_subscriptions | own | own | own | own |
 | reminder_log | none | service role | service role | service role |
 
+**Private rows require current membership.** A private note/task is visible to its creator only while the creator is still a member of that household (a user who leaves loses access). `household_id` and `created_by` are immutable after insert (column privileges); only the creator may change `visibility` (trigger `only_creator_can_change_visibility`).
+
 **Assignment ≠ access.** `assigned_to` is not consulted by any select policy. Private tasks may only be unassigned or self-assigned (DB check), so an assignee can never be granted access by accident. Shared tasks visible to both members regardless of assignee.
 
 ## Storage

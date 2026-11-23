@@ -39,6 +39,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notes": {
+                  Row: {
+                    "content": string,"created_at": string,"created_by": string,"household_id": string,"id": string,"title": string,"updated_at": string,"visibility": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "content"?: string,"created_at"?: string,"created_by"?: string,"household_id": string,"id"?: string,"title"?: string,"updated_at"?: string,"visibility"?: string
+                  }
+                  Update: {
+                    "content"?: string,"created_at"?: string,"created_by"?: string,"household_id"?: string,"id"?: string,"title"?: string,"updated_at"?: string,"visibility"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notes_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "display_name": string,"id": string,"notifications_enabled": boolean,"reminder_days_before": number,"reminder_hour": number
