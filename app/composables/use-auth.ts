@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import type { LoginInput, SignupInput } from '#shared/validation/auth'
+import { ROUTES } from '#shared/routes'
 import { authErrorMessage } from '#shared/validation/auth'
 
 type AuthResult = { ok: true } | { ok: false, message: string }
@@ -22,9 +23,16 @@ export function useAuth() {
 
   async function signIn(input: LoginInput): Promise<AuthResult> {
     const { data, error } = await supabase.auth.signInWithPassword(input)
-    if (error) return { ok: false, message: authErrorMessage(error.code) }
+    if (error) {
+      return {
+        ok: false,
+        message: authErrorMessage(error.code),
+      }
+    }
     await syncAuthState(data.session)
-    return { ok: true }
+    return {
+      ok: true,
+    }
   }
 
   async function signUp(input: SignupInput): Promise<AuthResult> {
@@ -33,13 +41,23 @@ export function useAuth() {
       password: input.password,
       options: { data: { display_name: input.displayName } }, // read by the profiles signup trigger
     })
-    if (error) return { ok: false, message: authErrorMessage(error.code) }
+    if (error) {
+      return {
+        ok: false,
+        message: authErrorMessage(error.code),
+      }
+    }
     if (!data.session) {
       // Only happens if "Confirm email" was turned on in the Auth settings (it must stay off, D11).
-      return { ok: false, message: 'Account created, but email confirmation is required. Ask the admin to disable it.' }
+      return {
+        ok: false,
+        message: 'Account created, but email confirmation is required. Ask the admin to disable it.',
+      }
     }
     await syncAuthState(data.session)
-    return { ok: true }
+    return {
+      ok: true,
+    }
   }
 
   async function signOut() {
@@ -47,8 +65,12 @@ export function useAuth() {
     session.value = null
     user.value = null
     membership.reset()
-    await navigateTo('/login')
+    await navigateTo(ROUTES.login)
   }
 
-  return { signIn, signUp, signOut }
+  return {
+    signIn,
+    signUp,
+    signOut,
+  }
 }

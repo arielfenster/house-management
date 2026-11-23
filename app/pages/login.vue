@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import * as v from 'valibot'
+import { REDIRECT_QUERY, ROUTES } from '#shared/routes'
 import { fieldErrors, loginSchema, safeRedirect } from '#shared/validation/auth'
 
 useHead({ title: 'Log in' })
@@ -12,7 +13,10 @@ const errors = ref<Record<string, string>>({})
 const formError = ref('')
 const pending = ref(false)
 
-const signupLink = computed(() => ({ path: '/signup', query: route.query.redirect ? { redirect: route.query.redirect } : {} }))
+const signupLink = computed(() => ({
+  path: ROUTES.signup,
+  query: route.query[REDIRECT_QUERY] ? { [REDIRECT_QUERY]: route.query[REDIRECT_QUERY] } : {},
+}))
 
 async function submit() {
   formError.value = ''
@@ -30,7 +34,7 @@ async function submit() {
     return
   }
   // The middleware routes on from here (onboarding if no household yet).
-  await navigateTo(safeRedirect(route.query.redirect))
+  await navigateTo(safeRedirect(route.query[REDIRECT_QUERY]))
 }
 </script>
 

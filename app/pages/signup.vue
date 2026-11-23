@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import * as v from 'valibot'
+import { REDIRECT_QUERY, ROUTES } from '#shared/routes'
 import { DISPLAY_NAME_MAX_LENGTH, PASSWORD_MIN_LENGTH, fieldErrors, safeRedirect, signupSchema } from '#shared/validation/auth'
 
 useHead({ title: 'Sign up' })
@@ -12,7 +13,10 @@ const errors = ref<Record<string, string>>({})
 const formError = ref('')
 const pending = ref(false)
 
-const loginLink = computed(() => ({ path: '/login', query: route.query.redirect ? { redirect: route.query.redirect } : {} }))
+const loginLink = computed(() => ({
+  path: ROUTES.login,
+  query: route.query[REDIRECT_QUERY] ? { [REDIRECT_QUERY]: route.query[REDIRECT_QUERY] } : {},
+}))
 
 async function submit() {
   formError.value = ''
@@ -30,7 +34,7 @@ async function submit() {
     return
   }
   // A new user has no household, so the middleware sends them to onboarding (or the invite link).
-  await navigateTo(safeRedirect(route.query.redirect, '/onboarding'))
+  await navigateTo(safeRedirect(route.query[REDIRECT_QUERY], ROUTES.onboarding))
 }
 </script>
 

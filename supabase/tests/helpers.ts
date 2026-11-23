@@ -19,8 +19,12 @@ let cachedEnv: TestEnv | undefined;
 
 /** SUPABASE_URL / SUPABASE_KEY / SUPABASE_SECRET_KEY from the environment or .env, else from `supabase status`. */
 export function getEnv(): TestEnv {
-	if (cachedEnv) return cachedEnv;
-	if (existsSync('.env')) process.loadEnvFile('.env');
+	if (cachedEnv) {
+		return cachedEnv;
+	}
+	if (existsSync('.env')) {
+		process.loadEnvFile('.env');
+	}
 	const { SUPABASE_URL, SUPABASE_KEY, SUPABASE_SECRET_KEY } = process.env;
 	if (SUPABASE_URL && SUPABASE_KEY && SUPABASE_SECRET_KEY) {
 		cachedEnv = { url: SUPABASE_URL, publishableKey: SUPABASE_KEY, secretKey: SUPABASE_SECRET_KEY };
@@ -86,14 +90,22 @@ export async function createUser(label: string, displayName = label): Promise<Te
 		email_confirm: true,
 		user_metadata: { display_name: displayName },
 	});
-	if (created.error || !created.data.user)
+	if (created.error || !created.data.user) {
 		throw new Error(`createUser failed: ${created.error?.message}`);
+	}
 	createdUserIds.push(created.data.user.id);
 
 	const client = anonClient();
 	const signedIn = await client.auth.signInWithPassword({ email, password });
-	if (signedIn.error) throw new Error(`sign-in failed: ${signedIn.error.message}`);
-	return { id: created.data.user.id, email, displayName, client };
+	if (signedIn.error) {
+		throw new Error(`sign-in failed: ${signedIn.error.message}`);
+	}
+	return {
+		id: created.data.user.id,
+		email,
+		displayName,
+		client,
+	};
 }
 
 /** Creates a household through the real RPC, as `user`. */
@@ -106,7 +118,9 @@ export async function createHousehold(
 		p_name: name,
 		p_timezone: timezone,
 	});
-	if (error || !data) throw new Error(`create_household failed: ${error?.message}`);
+	if (error || !data) {
+		throw new Error(`create_household failed: ${error?.message}`);
+	}
 	createdHouseholdIds.push(data);
 	return data;
 }
@@ -117,7 +131,9 @@ export async function inviteCodeOf(householdId: string): Promise<string> {
 		.select('invite_code')
 		.eq('id', householdId)
 		.single();
-	if (error) throw new Error(`inviteCodeOf failed: ${error.message}`);
+	if (error) {
+		throw new Error(`inviteCodeOf failed: ${error.message}`);
+	}
 	return data.invite_code;
 }
 
@@ -137,14 +153,26 @@ export async function createWorld(): Promise<World> {
 	const householdB = await createHousehold(b1, 'Household B');
 	const codeA = await inviteCodeOf(householdA);
 	const { error } = await a2.client.rpc('join_household', { p_invite_code: codeA });
-	if (error) throw new Error(`join_household failed: ${error.message}`);
-	return { a1, a2, b1, householdA, householdB, codeA };
+	if (error) {
+		throw new Error(`join_household failed: ${error.message}`);
+	}
+	return {
+		a1,
+		a2,
+		b1,
+		householdA,
+		householdB,
+		codeA,
+	};
 }
 
 /** Removes everything created through these helpers (households cascade to members and notes). */
 export async function cleanup(): Promise<void> {
 	const admin = adminClient();
-	if (createdHouseholdIds.length)
+	if (createdHouseholdIds.length) {
 		await admin.from('households').delete().in('id', createdHouseholdIds.splice(0));
-	for (const id of createdUserIds.splice(0)) await admin.auth.admin.deleteUser(id);
+	}
+	for (const id of createdUserIds.splice(0)) {
+		await admin.auth.admin.deleteUser(id);
+	}
 }

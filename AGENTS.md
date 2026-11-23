@@ -16,6 +16,8 @@ Direct supabase-js CRUD under RLS; Nuxt server routes only for logic/secrets (`d
 
 ## Conventions
 TypeScript strict; files `kebab-case`, components `PascalCase`, composables `useX`; DB tables/columns `snake_case`; dates are `date` (local calendar) unless an instant is needed; categories/groups are never DB enums.
+Control-flow bodies always in braces on their own line (no `if (x) return y`; ESLint `curly`/`brace-style` enforce it). Returned object literals are multi-line, one property per line, even with a single key.
+No hard-coded route paths: use `ROUTES` / `joinPath` / `REDIRECT_QUERY` from `shared/routes.ts` (add new pages there).
 
 ## UI/UX
 UI is English/LTR. User content may be Hebrew: put `dir="auto"` on inputs and user-content text.

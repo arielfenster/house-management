@@ -1,25 +1,45 @@
 <script setup lang="ts">
-// Extra attrs (type, autocomplete, dir…) go to the input, not the wrapper.
-defineOptions({ inheritAttrs: false })
+import type { InputHTMLAttributes, InputTypeHTMLAttribute } from 'vue'
 
 const props = defineProps<{
   id: string
   label: string
   error?: string
+  type?: InputTypeHTMLAttribute
+  autocomplete?: string
+  inputmode?: InputHTMLAttributes['inputmode']
+  placeholder?: string
+  maxlength?: number
+  autofocus?: boolean
+  /** `auto` for fields that may hold Hebrew user content (D17). */
+  dir?: 'auto' | 'ltr' | 'rtl'
 }>()
 
 const model = defineModel<string>({ required: true })
+
+// The generated shadcn `Input` declares only its own props and passes native attributes through,
+// so they are handed over as one typed object instead of individual (untyped) attributes.
+const inputAttrs = computed<InputHTMLAttributes>(() => ({
+  'id': props.id,
+  'type': props.type,
+  'autocomplete': props.autocomplete,
+  'inputmode': props.inputmode,
+  'placeholder': props.placeholder,
+  'maxlength': props.maxlength,
+  'autofocus': props.autofocus,
+  'dir': props.dir,
+  'aria-invalid': props.error ? true : undefined,
+  'aria-describedby': props.error ? `${props.id}-error` : undefined,
+}))
 </script>
 
 <template>
   <div class="space-y-1.5">
     <label :for="props.id" class="text-sm font-medium">{{ props.label }}</label>
     <Input
-      :id="props.id"
-      v-model="model"
-      v-bind="$attrs"
-      :aria-invalid="props.error ? true : undefined"
-      :aria-describedby="props.error ? `${props.id}-error` : undefined"
+      v-bind="inputAttrs"
+      :model-value="model"
+      @update:model-value="model = String($event)"
     />
     <p v-if="props.error" :id="`${props.id}-error`" class="text-xs text-destructive">
       {{ props.error }}

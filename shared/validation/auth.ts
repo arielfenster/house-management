@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { ROUTES } from '../routes'
 
 // Keep in sync with supabase/config.toml `minimum_password_length` (and the prod Auth setting).
 export const PASSWORD_MIN_LENGTH = 6
@@ -39,7 +40,9 @@ export function fieldErrors(issues: v.BaseIssue<unknown>[]): Record<string, stri
   const errors: Record<string, string> = {}
   for (const issue of issues) {
     const key = issue.path?.[0]?.key
-    if (typeof key === 'string' && !(key in errors)) errors[key] = issue.message
+    if (typeof key === 'string' && !(key in errors)) {
+      errors[key] = issue.message
+    }
   }
   return errors
 }
@@ -48,12 +51,18 @@ export function fieldErrors(issues: v.BaseIssue<unknown>[]): Record<string, stri
  * Returns `value` if it is a same-origin app path (e.g. `/join/abc?x=1`), else `fallback`.
  * Guards the `?redirect=` query against open redirects (`//evil.com`, `/\evil.com`, `https://…`).
  */
-export function safeRedirect(value: unknown, fallback = '/'): string {
-  if (typeof value !== 'string' || !value.startsWith('/')) return fallback
-  if (value.startsWith('//') || value.startsWith('/\\')) return fallback
+export function safeRedirect(value: unknown, fallback: string = ROUTES.home): string {
+  if (typeof value !== 'string' || !value.startsWith('/')) {
+    return fallback
+  }
+  if (value.startsWith('//') || value.startsWith('/\\')) {
+    return fallback
+  }
   // Control characters / whitespace can be normalised by browsers into a protocol-relative URL.
   // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\s]/.test(value)) return fallback
+  if (/[\u0000-\u001f\s]/.test(value)) {
+    return fallback
+  }
   return value
 }
 

@@ -7,11 +7,15 @@ let w: World
 
 async function addNote(user: TestUser, household: string, visibility: 'private' | 'shared', title = visibility) {
   const { data, error } = await user.client.from('notes').insert({ household_id: household, visibility, title }).select('id').single()
-  if (error) throw new Error(`addNote failed: ${error.message}`)
+  if (error) {
+    throw new Error(`addNote failed: ${error.message}`)
+  }
   return data.id
 }
 
-beforeAll(async () => { w = await createWorld() })
+beforeAll(async () => {
+  w = await createWorld()
+})
 afterAll(cleanup)
 
 describe('private vs shared visibility', () => {
