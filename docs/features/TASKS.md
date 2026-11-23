@@ -29,7 +29,7 @@ Per 04: private visible only to creator; shared to household; assignment indepen
 
 ## 9. Recurrence semantics (policy — decided, D10)
 All dates are **local calendar dates in the household timezone** (`date`, no time-of-day). "Today" = today in that timezone.
-- **Completing a recurring task** inserts a `task_completions` row (completed_at = now, `due_date_at_completion`) and sets `due_date = addInterval(localCompletionDate, interval)`. (Anchor = completion date (decided).)
+- **Completing a recurring task** inserts a `task_completions` row (completed_at = now, `due_date_at_completion`), sets `tasks.last_completed_at = now`, and sets `due_date = addInterval(localCompletionDate, interval)`. (Anchor = completion date (decided).)
 - **Early completion:** same rule; the next occurrence counts from the actual completion day.
 - **Late completion:** same rule; no back-filling.
 - **Missed occurrences:** never generate catch-up instances; a task simply stays overdue until completed once.
@@ -37,7 +37,7 @@ All dates are **local calendar dates in the household timezone** (`date`, no tim
 - **Yearly:** +12 months; Feb 29 + 1 year = Feb 28 in non-leap years.
 - **Weeks/days:** +7N / +N days. DST irrelevant because dates, not instants.
 - **Editing recurrence/due date:** takes effect immediately; history untouched.
-- **One-time completion:** `completed_at` set; "uncomplete" clears it. Undo of a recurring completion deletes the completion row and restores the previous `due_date` (from `due_date_at_completion`).
+- **One-time completion:** `completed_at` set; "uncomplete" clears it. Undo of a recurring completion deletes the completion row, restores the previous `due_date` (from `due_date_at_completion`) and resets `last_completed_at` to the previous completion's `completed_at` (or null).
 Implemented as pure functions in `shared/recurrence.ts`, exhaustively unit-tested.
 
 ## Deferred (not in v1 UI)

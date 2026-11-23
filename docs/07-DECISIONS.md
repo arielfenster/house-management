@@ -13,8 +13,8 @@ Context: spec allows it initially. Alternative: allow many now. Rationale: avoid
 ### D3 — Household-scoped, seeded (not system-wide) categories/rooms/groups, separate tables
 Alternatives: system rows + custom rows (nullable household_id); one generic `labels` table. Rationale: uniform RLS, renaming/deleting defaults trivially allowed, no special cases. Consequences: defaults copied per household at creation. 2026-11-20.
 
-### D4 — Recurrence stored as columns; `due_date` stored; no `last_completed_at`
-Alternatives: JSON/RRULE, separate schedule table, computing due date on read. Rationale: constrained simple columns; stored due date is the hot query/notification key; last completion derived from history. 2026-11-20.
+### D4 — Recurrence stored as columns; `due_date` and `last_completed_at` stored
+Alternatives: JSON/RRULE, separate schedule table, computing due date on read. Rationale: constrained simple columns; stored due date is the hot query/notification key. Revised 2026-11-23 (review): the user wants to see when a recurring task was last completed, so `tasks.last_completed_at` (nullable timestamptz) stores a single latest completion, set by `complete_task` in the same transaction. `task_completions` remains the full history (the future "all completions" view); undo resets `last_completed_at` to the previous completion's `completed_at` (or null). 2026-11-20.
 
 ### D5 — Direct supabase-js CRUD under RLS; server routes only for logic/secrets
 Rationale: least code, single authorization boundary (RLS). Consequences: any new privileged route needs a decision entry. 2026-11-20.
@@ -41,7 +41,7 @@ Supabase Auth email/password; **"Confirm email" is disabled** so signup works im
 **Signup restriction:** since anyone with the URL could otherwise create an account (though they could not access any household without an invite code), disable public signups after the two accounts exist (Supabase "Allow new users to sign up" off) or keep signups open but rely on RLS isolation; decide at FOUNDATION-015. Invite codes/links remain the only way into a household.
 
 ### D12 — Supabase free tier only (Q3)
-Consequences/risks: (a) free projects are paused after a period of inactivity — the hourly reminder job and normal use should keep the project active, but this is **unverified**; FOUNDATION-014/NOTIF-008 must check actual behaviour and the pause policy, and we should know how to resume a paused project; (b) free-tier storage/database/egress quotas apply — keep the 15 MB file limit and monitor usage; (c) no automatic backups on free — schedule a periodic `pg_dump` (manual or CI) as a safety net; (d) re-check that `pg_cron`/`pg_net` and Realtime are available on the free plan at Phase 0 time.
+Consequences/risks: (a) free projects are paused after a period of **inactivity**, meaning no API/database requests for about a week (exact threshold and what counts as activity are **unverified**). A paused project makes the app unavailable until you click "Restore" in the Supabase dashboard. The hourly reminder job and normal use should keep it active; mitigation: the cron job (or a small daily keep-alive query) doubles as keep-alive, and resume steps are documented in 08-DEPLOYMENT.md; FOUNDATION-014/NOTIF-008 must check actual behaviour and the pause policy, and we should know how to resume a paused project; (b) free-tier storage/database/egress quotas apply — keep the 15 MB file limit and monitor usage; (c) no automatic backups on free — schedule a periodic `pg_dump` (manual or CI) as a safety net; (d) re-check that `pg_cron`/`pg_net` and Realtime are available on the free plan at Phase 0 time.
 
 ### D13 — Vercel hosting (Q4)
 Confirmed. See 08-DEPLOYMENT.md.

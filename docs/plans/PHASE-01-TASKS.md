@@ -13,15 +13,15 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 
 ## Implementation
 - [ ] TASKS-001: Migration — `task_categories`, `rooms` (+ seeding in `create_household`, backfill existing households)
-- [ ] TASKS-002: Migration — `tasks`, `task_completions`, constraints, indexes, `complete_task` RPC
+- [ ] TASKS-002: Migration — `tasks` (incl. `last_completed_at`), `task_completions`, constraints, indexes, `complete_task` RPC (sets `last_completed_at`)
 - [ ] TASKS-003: RLS for tasks/completions/categories/rooms + tests (04 matrix items 1–6, 10)
 - [ ] TASKS-004: `shared/recurrence.ts` pure functions + exhaustive unit tests (month-end, leap, early/late, tz "today")
-- [ ] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo
+- [ ] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo (restores `due_date` and `last_completed_at`)
 - [ ] TASKS-006: Task list UI: rows, due labels, sort, quick add
 - [ ] TASKS-007: `ResponsiveSheet` + task create/edit form (type, recurrence, assignee; no private toggle in v1 — D15)
 - [ ] TASKS-008: `CreatableSelect` for category and room (create inline, auto-select, rename/delete)
 - [ ] TASKS-009: Filters (All/Upcoming/Overdue/Completed + category/room/type) and search
-- [ ] TASKS-010: Detail view: last completion + completion history
+- [ ] TASKS-010: Detail view: last completion (`last_completed_at`) + completion history
 - [ ] TASKS-011: Playwright e2e (create, complete recurring, custom category) + mobile viewport check
 - [ ] TASKS-012: Deploy
 

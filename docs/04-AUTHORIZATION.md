@@ -12,11 +12,13 @@ Supabase Auth (email + password only, email confirmation disabled, no emails sen
 ## Household lifecycle (needs privileged functions)
 - `create_household(name, timezone)` — `security definer` RPC: inserts household, membership, default categories/rooms/groups, shopping list. Callable by any authenticated user without a household.
 - `join_household(invite_code)` — `security definer` RPC: validates code, inserts membership (fails if user already in one). Rate-limit via Supabase Auth limits / simple attempt guard; codes are long random strings (≥ 12 chars).
-- Clients cannot insert into `households`/`household_members` directly (no insert policies).
+- Clients cannot insert into `households`/`household_members` directly (no insert policies). Rows are created **only by the two RPCs above**, called from the app (`supabase.rpc(...)`) during `/onboarding`. They are `security definer`, so they bypass RLS and enforce the rules themselves (caller authenticated, not already in a household, invite code valid). Without this, any user could insert a membership row for any household. Nothing is added by hand in the Supabase dashboard except for manual repairs.
 
 Private-task **UI** is deferred (D15), but the policies below are implemented and tested from Phase 1.
 
 ## Policy rules
+`auth.uid()` is a Supabase SQL function returning the `id` from the caller's JWT, i.e. the primary key of `auth.users`. It is not a foreign key itself: columns such as `created_by`, `user_id`, `assigned_to` are real foreign keys to `auth.users(id)` (and `profiles.id` equals the same uuid), and a policy like `created_by = auth.uid()` just compares that column with the caller's id. No lookup in `profiles` is involved.
+
 | Resource | Select | Insert | Update | Delete |
 |---|---|---|---|---|
 | households | member | RPC only | member (name/timezone) | none (v1) |

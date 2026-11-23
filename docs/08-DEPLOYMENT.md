@@ -6,7 +6,7 @@
 - **Scheduler:** Supabase **pg_cron + pg_net** → `POST https://<app>/api/cron/reminders` hourly with header `x-cron-secret`. Reason: Vercel Hobby cron is limited to once per day (±1 hour precision), which can't deliver reminders at each user's chosen hour; Vercel Pro cron or an external scheduler also work. Notes from docs: pg_net requests are fire-and-forget without retry (hourly cadence + idempotent log makes this fine); `cron.job_run_details` needs periodic cleanup (add a small cleanup job).
 
 ## Free-tier notes (D12)
-Supabase free projects may be paused when inactive and have no managed backups: document how to resume, and run a periodic `pg_dump` backup. Verify `pg_cron`/`pg_net`/Realtime availability and quotas at setup. No emails are sent (email confirmation disabled), so no SMTP provider is needed; password resets are done manually in the Supabase dashboard.
+Supabase free projects are paused after about a week without activity (unverified; no API/database requests). To resume, open the project in the Supabase dashboard and click "Restore"; the reminder cron job acts as keep-alive. They also have no managed backups: document how to resume, and run a periodic `pg_dump` backup. Verify `pg_cron`/`pg_net`/Realtime availability and quotas at setup. No emails are sent (email confirmation disabled), so no SMTP provider is needed; password resets are done manually in the Supabase dashboard.
 
 ## Environment variables
 | Var | Scope |

@@ -58,9 +58,10 @@ Household-scoped, **no system rows**: defaults (Cleaning/Maintenance/General; Ki
 | recurrence_unit text null, recurrence_interval int null | check (`day`,`week`,`month`,`year`), interval ≥ 1; both required iff recurring. "Every 3 months" = (month,3). Columns, not JSON/table: simple, constrained, queryable |
 | remind_days_before int null | per-task override of profile default; null = use default |
 | completed_at timestamptz null | one-time only; null for recurring |
+| last_completed_at timestamptz null | recurring: most recent completion (single value, set by `complete_task`; full history is in `task_completions`) |
 | created_at, updated_at | |
 Constraints: kind/recurrence consistency check; private ⇒ (assigned_to is null or assigned_to = created_by).
-Redundant/derivable: **no `last_completed_at`** (derive from `task_completions`, `max(completed_at)` — also fetched via lateral join in the list query). `due_date` for recurring is technically derivable but is stored: it is the hot filter/sort/notification column and its computation policy (see TASKS.md) must not be re-run on every read.
+Redundant/derivable: `last_completed_at` is stored (D4) for cheap display without a join; it is maintained by `complete_task` and by undo (reset to the previous completion). `due_date` for recurring is technically derivable but is stored: it is the hot filter/sort/notification column and its computation policy (see TASKS.md) must not be re-run on every read.
 Indexes: `(household_id, due_date)` where `completed_at is null`; `(assigned_to)`; trigram/ILIKE on title is unnecessary at this scale (seq scan).
 
 ### task_completions
