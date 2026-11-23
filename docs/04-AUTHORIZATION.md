@@ -7,7 +7,7 @@
 4. No roles/permission hierarchy: a household has equal members.
 
 ## Authentication
-Supabase Auth (email + password only, email confirmation disabled, no emails sent; magic link/OAuth optional later), cookie-based SSR sessions via `@nuxtjs/supabase`. Route middleware redirects unauthenticated users to `/login`; authenticated users without a household go to `/onboarding` (create household → get invite code; or join with code).
+Supabase Auth (email + password only, email confirmation disabled, no emails sent; magic link/OAuth optional later), cookie-based SSR sessions via `@nuxtjs/supabase`. Route middleware redirects unauthenticated users to `/login`; authenticated users without a household go to `/onboarding` (create household → get invite code; or join with code). Implementation (`app/middleware/auth.global.ts`): routes on the verified JWT claims (`useSupabaseUser().sub`) and a cached membership lookup (`useMembership`); signed-out users keep the target in `/login?redirect=…` (validated by `safeRedirect` in `shared/validation/auth.ts`: same-origin paths only), so `/join/<code>` links survive login/signup; signed-in members are sent away from `/login`, `/signup`, `/onboarding`. The middleware is UX only — RLS remains the boundary.
 
 ## Household lifecycle (needs privileged functions)
 - `create_household(p_name, p_timezone)` — `security definer` RPC: validates name and IANA timezone, inserts household and membership (default categories/rooms/groups and shopping list are added by later phases at the marked seed hook), returns the household id. Callable by any authenticated user without a household.
