@@ -18,3 +18,10 @@ npx supabase status -o env   # copy URL / publishable / secret keys into .env (s
 npm run db:types          # regenerate types/database.types.ts after every migration
 npm run dev
 ```
+
+### Tests
+```bash
+npm test             # Vitest; RLS tests run against the local stack (npm run db:start first)
+npm run typecheck    # Nuxt app + tests/scripts (tsconfig.tests.json)
+```
+RLS tests (`supabase/tests/rls/`) sign in real users and query through the API, so they exercise the same policies as the browser. They create uniquely named users/households and clean up after themselves; keys come from `.env` or `supabase status`.

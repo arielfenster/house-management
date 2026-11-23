@@ -1,0 +1,18 @@
+{
+  // Typechecks code outside the Nuxt projects: DB integration tests, scripts, vitest config.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": false,
+    "isolatedModules": true
+  },
+  "include": ["supabase/tests/**/*.ts", "scripts/**/*.ts", "vitest.config.ts", "types/database.types.ts"]
+}

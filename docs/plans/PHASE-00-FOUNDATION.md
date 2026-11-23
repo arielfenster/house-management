@@ -18,7 +18,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-004: Migration — `profiles` (+ signup trigger), `households`, `household_members` (unique user_id), `private.is_member()`
 - [x] FOUNDATION-005: Migration — RPCs `create_household` (seeds nothing task/file-specific yet except household row, membership; seed hooks added in later phases) and `join_household`
 - [x] FOUNDATION-006: Migration — `notes` table + RLS (private/shared)
-- [ ] FOUNDATION-007: RLS test harness (Vitest, JWT-scoped clients for users A1/A2/B1) + tests for household isolation, notes private/shared, join rules
+- [x] FOUNDATION-007: RLS test harness (Vitest, JWT-scoped clients for users A1/A2/B1) + tests for household isolation, notes private/shared, join rules
 - [ ] FOUNDATION-008: Auth pages (`/login`, signup) + route middleware (login → onboarding → app)
 - [ ] FOUNDATION-009: Onboarding: create household (name, timezone) / join by invite code or `/join/<code>` link; show/copy/share invite code and link
 - [ ] FOUNDATION-010: AppShell: mobile bottom bar (safe-area) + desktop sidebar; `/` → `/tasks`; four placeholder pages
