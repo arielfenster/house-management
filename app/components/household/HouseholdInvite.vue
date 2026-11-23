@@ -97,11 +97,15 @@ async function share() {
       </p>
       <div class="flex items-center gap-2">
         <code class="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-1.5 font-mono text-xs" dir="ltr">{{ inviteLink }}</code>
-        <Button variant="outline" size="sm" class="w-24 shrink-0" @click="copy('link')">
+        <Button
+          variant="outline"
+          size="icon"
+          class="shrink-0"
+          :aria-label="copied === 'link' ? 'Invite link copied' : 'Copy invite link'"
+          @click="copy('link')"
+        >
           <CheckIcon v-if="copied === 'link'" class="text-green-600 dark:text-green-500" />
           <CopyIcon v-else />
-          {{ copied === 'link' ? 'Copied' : 'Copy' }}
-          <span class="sr-only">invite link</span>
         </Button>
       </div>
     </div>
@@ -112,11 +116,15 @@ async function share() {
       </p>
       <div class="flex items-center gap-2">
         <code class="min-w-0 flex-1 rounded-md bg-muted px-2 py-1.5 font-mono text-xs break-all" dir="ltr">{{ props.inviteCode }}</code>
-        <Button variant="outline" size="sm" class="w-24 shrink-0" @click="copy('code')">
+        <Button
+          variant="outline"
+          size="icon"
+          class="shrink-0"
+          :aria-label="copied === 'code' ? 'Invite code copied' : 'Copy invite code'"
+          @click="copy('code')"
+        >
           <CheckIcon v-if="copied === 'code'" class="text-green-600 dark:text-green-500" />
           <CopyIcon v-else />
-          {{ copied === 'code' ? 'Copied' : 'Copy' }}
-          <span class="sr-only">invite code</span>
         </Button>
       </div>
     </div>
