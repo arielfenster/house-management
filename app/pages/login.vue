@@ -41,7 +41,7 @@ async function submit() {
 <template>
   <AuthCard title="Log in">
     <form class="space-y-4" novalidate @submit.prevent="submit">
-      <AuthFormField
+      <FormField
         id="email"
         v-model="form.email"
         label="Email"
@@ -51,7 +51,7 @@ async function submit() {
         autofocus
         :error="errors.email"
       />
-      <AuthFormField
+      <FormField
         id="password"
         v-model="form.password"
         label="Password"

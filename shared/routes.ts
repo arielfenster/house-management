@@ -14,6 +14,9 @@ export const ROUTES = {
 /** Query parameter carrying the page to return to after login/signup (`/login?redirect=/join/abc`). */
 export const REDIRECT_QUERY = 'redirect'
 
+/** Query parameter pre-filling the invite code on onboarding (`/onboarding?code=…`, set by `/join/<code>`). */
+export const INVITE_CODE_QUERY = 'code'
+
 /** Invite link path for a household invite code. */
 export function joinPath(inviteCode: string): string {
   return `${ROUTES.join}${encodeURIComponent(inviteCode)}`

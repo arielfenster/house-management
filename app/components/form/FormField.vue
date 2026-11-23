@@ -11,6 +11,9 @@ const props = defineProps<{
   placeholder?: string
   maxlength?: number
   autofocus?: boolean
+  /** String, not boolean: an absent boolean prop would be cast to `false` and disable spellcheck. */
+  spellcheck?: 'true' | 'false'
+  autocapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
   /** `auto` for fields that may hold Hebrew user content (D17). */
   dir?: 'auto' | 'ltr' | 'rtl'
 }>()
@@ -27,14 +30,25 @@ const inputAttrs = computed<InputHTMLAttributes>(() => ({
   'placeholder': props.placeholder,
   'maxlength': props.maxlength,
   'autofocus': props.autofocus,
+  'spellcheck': props.spellcheck,
+  'autocapitalize': props.autocapitalize,
   'dir': props.dir,
   'aria-invalid': props.error ? true : undefined,
   'aria-describedby': props.error ? `${props.id}-error` : undefined,
 }))
+
+// The `autofocus` attribute only works on a full page load; focus explicitly so it also works after
+// client-side navigation and when a form is swapped in (e.g. onboarding Create/Join).
+const root = useTemplateRef<HTMLElement>('root')
+onMounted(() => {
+  if (props.autofocus) {
+    root.value?.querySelector('input')?.focus()
+  }
+})
 </script>
 
 <template>
-  <div class="space-y-1.5">
+  <div ref="root" class="space-y-1.5">
     <label :for="props.id" class="text-sm font-medium">{{ props.label }}</label>
     <Input
       v-bind="inputAttrs"
