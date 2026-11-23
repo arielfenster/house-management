@@ -5,7 +5,55 @@ export type Database = {
   
   "public": {
           Tables: {
-            [_ in never]: never
+            "household_members": {
+                  Row: {
+                    "household_id": string,"joined_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "household_id": string,"joined_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "household_id"?: string,"joined_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "household_members_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"households": {
+                  Row: {
+                    "created_at": string,"id": string,"invite_code": string,"name": string,"timezone": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"invite_code"?: string,"name": string,"timezone"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"invite_code"?: string,"name"?: string,"timezone"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
+                  Row: {
+                    "display_name": string,"id": string,"notifications_enabled": boolean,"reminder_days_before": number,"reminder_hour": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "display_name": string,"id": string,"notifications_enabled"?: boolean,"reminder_days_before"?: number,"reminder_hour"?: number
+                  }
+                  Update: {
+                    "display_name"?: string,"id"?: string,"notifications_enabled"?: boolean,"reminder_days_before"?: number,"reminder_hour"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Views: {
             [_ in never]: never
