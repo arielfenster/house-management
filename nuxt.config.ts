@@ -5,7 +5,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint', 'shadcn-nuxt', '@nuxtjs/supabase'],
-  css: ['~/assets/css/tailwind.css'],
+  // vue-sonner v2 ships its toast styles separately; without them toasts render invisibly.
+  css: ['~/assets/css/tailwind.css', 'vue-sonner/style.css'],
   vite: {
     plugins: [tailwindcss()],
   },

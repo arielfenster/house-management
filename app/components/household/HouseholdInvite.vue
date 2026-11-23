@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CopyIcon, Share2Icon } from '@lucide/vue'
+import { CheckIcon, CopyIcon, Share2Icon } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { joinPath } from '#shared/routes'
 
@@ -35,19 +35,33 @@ function copyWithSelection(text: string): boolean {
   }
 }
 
-async function copy(text: string, what: string) {
-  let copied = false
+type CopyTarget = 'link' | 'code'
+
+const COPIED_FEEDBACK_MS = 2000
+
+/** Which button shows the "Copied" state (inline feedback right where the user tapped). */
+const copied = ref<CopyTarget | null>(null)
+let copiedTimer: ReturnType<typeof setTimeout> | undefined
+onBeforeUnmount(() => clearTimeout(copiedTimer))
+
+async function copy(target: CopyTarget) {
+  const text = target === 'link' ? inviteLink.value : props.inviteCode
+  let ok = false
   try {
     await navigator.clipboard.writeText(text)
-    copied = true
+    ok = true
   } catch {
-    copied = copyWithSelection(text)
+    ok = copyWithSelection(text)
   }
-  if (copied) {
-    toast.success(`${what} copied`)
-  } else {
-    toast.error(`Could not copy the ${what.toLowerCase()}. Select it and copy it manually.`)
+  if (!ok) {
+    toast.error(`Could not copy the ${target}. Select it and copy it manually.`)
+    return
   }
+  copied.value = target
+  clearTimeout(copiedTimer)
+  copiedTimer = setTimeout(() => {
+    copied.value = null
+  }, COPIED_FEEDBACK_MS)
 }
 
 async function share() {
@@ -83,8 +97,11 @@ async function share() {
       </p>
       <div class="flex items-center gap-2">
         <code class="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-1.5 font-mono text-xs" dir="ltr">{{ inviteLink }}</code>
-        <Button variant="outline" size="icon" aria-label="Copy invite link" @click="copy(inviteLink, 'Link')">
-          <CopyIcon />
+        <Button variant="outline" size="sm" class="w-24 shrink-0" @click="copy('link')">
+          <CheckIcon v-if="copied === 'link'" class="text-green-600 dark:text-green-500" />
+          <CopyIcon v-else />
+          {{ copied === 'link' ? 'Copied' : 'Copy' }}
+          <span class="sr-only">invite link</span>
         </Button>
       </div>
     </div>
@@ -95,11 +112,19 @@ async function share() {
       </p>
       <div class="flex items-center gap-2">
         <code class="min-w-0 flex-1 rounded-md bg-muted px-2 py-1.5 font-mono text-xs break-all" dir="ltr">{{ props.inviteCode }}</code>
-        <Button variant="outline" size="icon" aria-label="Copy invite code" @click="copy(props.inviteCode, 'Code')">
-          <CopyIcon />
+        <Button variant="outline" size="sm" class="w-24 shrink-0" @click="copy('code')">
+          <CheckIcon v-if="copied === 'code'" class="text-green-600 dark:text-green-500" />
+          <CopyIcon v-else />
+          {{ copied === 'code' ? 'Copied' : 'Copy' }}
+          <span class="sr-only">invite code</span>
         </Button>
       </div>
     </div>
+
+    <!-- Announces the copy result to screen readers. -->
+    <p class="sr-only" aria-live="polite">
+      {{ copied ? `Invite ${copied} copied` : '' }}
+    </p>
 
     <Button v-if="canShare" variant="secondary" class="w-full" @click="share">
       <Share2Icon />
