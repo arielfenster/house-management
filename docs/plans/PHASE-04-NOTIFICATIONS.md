@@ -13,7 +13,7 @@ Subscription + preference storage, reminder job, push delivery, `/notifications`
 
 ## Implementation
 - [ ] NOTIF-001: Migration — `push_subscriptions`, `reminder_log`, profile prefs columns usage, RLS
-- [ ] NOTIF-002: Generate VAPID keys; env config; service worker push + notificationclick (opens `/tasks?task=<id>`)
+- [ ] NOTIF-002: Generate VAPID keys; env config; service worker push + notificationclick (opens `/tasks?task=<id>`) in `service-worker/sw.ts` (D20)
 - [ ] NOTIF-003: Subscribe/unsubscribe composable + status detection (denied/unsupported/iOS-not-installed)
 - [ ] NOTIF-004: `/notifications` page: toggle, status, defaults, test push
 - [ ] NOTIF-005: Per-task reminder override field in task form

@@ -3,7 +3,7 @@
 Household management app. Read this first, then the relevant `docs/plans/PHASE-*.md` and `docs/features/*.md`.
 
 ## Stack
-Nuxt 4, Vue 3, TypeScript, Tailwind v4, shadcn-vue, Supabase (Postgres, Auth, Storage, RLS, Realtime), @vite-pwa/nuxt (injectManifest), web-push, Vitest, Playwright. Details: `docs/01-TECH-STACK.md`. Do not add dependencies without need; log significant ones in `docs/07-DECISIONS.md`.
+Nuxt 4, Vue 3, TypeScript, Tailwind v4, shadcn-vue, Supabase (Postgres, Auth, Storage, RLS, Realtime), @vite-pwa/nuxt (buildSW, own service worker), web-push, Vitest, Playwright. Details: `docs/01-TECH-STACK.md`. Do not add dependencies without need; log significant ones in `docs/07-DECISIONS.md`.
 
 ## Architecture
 Direct supabase-js CRUD under RLS; Nuxt server routes only for logic/secrets (`docs/02-ARCHITECTURE.md`). Pure logic in `shared/`. Migrations only in `supabase/migrations`, committed. Always use the typed supabase-js SDK (`SupabaseClient<Database>` from generated `types/database.types.ts`); regenerate types after every migration; no `any`/untyped queries.

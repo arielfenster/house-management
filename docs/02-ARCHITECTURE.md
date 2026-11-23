@@ -33,7 +33,7 @@ Files are stored in *Supabase Storage* (no separate file service). One *private*
 Hourly pg_cron job → `/api/cron/reminders`. For each active recurring task with a due date, per candidate recipient: compute `remind_at = due_date − (task.remind_days_before ?? profile.reminder_days_before)` at `profile.reminder_hour` in household timezone; if now ≥ remind_at and not overdue-by-more-than-grace, and no `reminder_log` row for `(task, user, due_date)` → insert log row (claim, `on conflict do nothing`) then send to all of the user's subscriptions; update status; delete subscriptions on 404/410. Claiming first guarantees no duplicates even with overlapping runs (a crash after claim loses one reminder rather than duplicating — acceptable). Recipients: assignee if set; else all members; private tasks: creator only. Editing a task/recurrence simply changes `due_date`/override, so the next run does the right thing.
 
 ## PWA strategy
-Phase 0: manifest + icons, `injectManifest` SW with precache of app shell only. Never cache `/api/*` or Supabase responses in v1. Push + notification click (opens `/tasks?task=<id>`) added in Phase 4. Offline data features are Phase 5, optional.
+Phase 0: manifest + icons, our own SW (`service-worker/sw.ts`, `buildSW` strategy, D20) with precache of app shell only. Never cache `/api/*` or Supabase responses in v1. Push + notification click (opens `/tasks?task=<id>`) added in Phase 4. Offline data features are Phase 5, optional.
 
 ## Realtime (shopping only)
 Subscribe to postgres_changes on `shopping_items`/`shopping_sections` filtered by `list_id`; apply events to local state; also refetch on tab focus as a safety net. Local mutations are optimistic.

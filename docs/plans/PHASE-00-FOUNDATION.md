@@ -6,7 +6,7 @@ Status: Not Started
 A secure, deployed skeleton: authentication, household create/join, private/shared RLS proven on `notes`, responsive navigation with four placeholder routes, tests and CI.
 
 ## Dependencies
-Approval of docs 01–04 and decisions D11–D17 in 07-DECISIONS.md (only Q7 remains open, resolved by FOUNDATION-011).
+Approval of docs 01–04 and decisions D11–D17 in 07-DECISIONS.md (Q7 resolved by FOUNDATION-011, see D20).
 
 ## Deliverables
 Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `households`, `household_members`, `notes`, helper functions; RLS test harness; CI.
@@ -22,7 +22,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-008: Auth pages (`/login`, signup) + route middleware (login → onboarding → app)
 - [x] FOUNDATION-009: Onboarding: create household (name, timezone) / join by invite code or `/join/<code>` link; show/copy/share invite code and link
 - [x] FOUNDATION-010: AppShell: mobile bottom bar (safe-area) + desktop sidebar; `/` → `/tasks`; four placeholder pages
-- [ ] FOUNDATION-011: PWA spike: `@vite-pwa/nuxt` with `injectManifest` on Nuxt 4 (manifest, icons, minimal SW); record outcome in 07-DECISIONS.md
+- [x] FOUNDATION-011: PWA spike: `@vite-pwa/nuxt` with `injectManifest` on Nuxt 4 (manifest, icons, minimal SW); record outcome in 07-DECISIONS.md
 - [ ] FOUNDATION-012: Playwright smoke test (signup → create household → navigate four routes)
 - [ ] FOUNDATION-013: GitHub Actions CI (typecheck, lint, vitest with local Supabase, build)
 - [ ] FOUNDATION-015: Auth config: email+password only, **disable "Confirm email"** (no emails sent), set site URL/redirects; decide on disabling public signups after both accounts exist; document manual password reset via dashboard

@@ -1,0 +1,17 @@
+{
+  // The service worker runs in a ServiceWorkerGlobalScope (WebWorker lib), not the DOM, so it is
+  // typechecked on its own (`npm run typecheck`), outside the Nuxt app projects.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "WebWorker"],
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true
+  },
+  "include": ["./**/*.ts"]
+}
