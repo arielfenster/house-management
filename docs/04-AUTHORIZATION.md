@@ -10,8 +10,9 @@
 Supabase Auth (email + password only, email confirmation disabled, no emails sent; magic link/OAuth optional later), cookie-based SSR sessions via `@nuxtjs/supabase`. Route middleware redirects unauthenticated users to `/login`; authenticated users without a household go to `/onboarding` (create household → get invite code; or join with code).
 
 ## Household lifecycle (needs privileged functions)
-- `create_household(name, timezone)` — `security definer` RPC: inserts household, membership, default categories/rooms/groups, shopping list. Callable by any authenticated user without a household.
-- `join_household(invite_code)` — `security definer` RPC: validates code, inserts membership (fails if user already in one). Rate-limit via Supabase Auth limits / simple attempt guard; codes are long random strings (≥ 12 chars).
+- `create_household(p_name, p_timezone)` — `security definer` RPC: validates name and IANA timezone, inserts household and membership (default categories/rooms/groups and shopping list are added by later phases at the marked seed hook), returns the household id. Callable by any authenticated user without a household.
+- `join_household(p_invite_code)` — `security definer` RPC: normalizes (trim, lowercase) and validates the code, inserts membership, returns the household id (fails if user already in one). Codes are 32 hex chars of a random uuid (122 bits), so no attempt counter is kept (a failed attempt would roll back its own log row anyway).
+- Both raise stable error messages the UI maps to text: `not_authenticated`, `already_in_household`, `invalid_name`, `invalid_timezone`, `invalid_invite_code`. Execute is granted to `authenticated` only.
 - Clients cannot insert into `households`/`household_members` directly (no insert policies). Rows are created **only by the two RPCs above**, called from the app (`supabase.rpc(...)`) during `/onboarding`. They are `security definer`, so they bypass RLS and enforce the rules themselves (caller authenticated, not already in a household, invite code valid). Without this, any user could insert a membership row for any household. Nothing is added by hand in the Supabase dashboard except for manual repairs.
 
 Private-task **UI** is deferred (D15), but the policies below are implemented and tested from Phase 1.

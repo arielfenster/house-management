@@ -59,7 +59,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "create_household":
+{ Args: { "p_name": string,"p_timezone": string }; Returns: string
+                           },
+"join_household":
+{ Args: { "p_invite_code": string }; Returns: string
+                           }
           }
           Enums: {
             [_ in never]: never

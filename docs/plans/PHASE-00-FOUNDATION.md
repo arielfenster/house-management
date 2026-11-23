@@ -16,7 +16,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-002: Tailwind v4 (`@tailwindcss/vite`) + shadcn-nuxt; add base components (Button, Input, Drawer, Dialog, Select, Sonner)
 - [x] FOUNDATION-003: Supabase CLI init, local stack, `@nuxtjs/supabase` config, `npm run db:types` script generating `types/database.types.ts`, typed `Database` client wiring (browser + server), CI check that types are up to date
 - [x] FOUNDATION-004: Migration — `profiles` (+ signup trigger), `households`, `household_members` (unique user_id), `private.is_member()`
-- [ ] FOUNDATION-005: Migration — RPCs `create_household` (seeds nothing task/file-specific yet except household row, membership; seed hooks added in later phases) and `join_household`
+- [x] FOUNDATION-005: Migration — RPCs `create_household` (seeds nothing task/file-specific yet except household row, membership; seed hooks added in later phases) and `join_household`
 - [ ] FOUNDATION-006: Migration — `notes` table + RLS (private/shared)
 - [ ] FOUNDATION-007: RLS test harness (Vitest, JWT-scoped clients for users A1/A2/B1) + tests for household isolation, notes private/shared, join rules
 - [ ] FOUNDATION-008: Auth pages (`/login`, signup) + route middleware (login → onboarding → app)
