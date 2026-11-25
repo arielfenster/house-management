@@ -12,18 +12,6 @@ export default defineNuxtConfig({
     head: {
       // viewport-fit=cover makes env(safe-area-inset-*) non-zero (bottom bar above the iPhone home indicator).
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
-      meta: [
-        {
-          name: 'theme-color',
-          content: THEME_COLOR,
-        },
-      ],
-      link: [
-        {
-          rel: 'apple-touch-icon',
-          href: '/apple-touch-icon-180x180.png',
-        },
-      ],
     },
   },
   modules: ['@nuxt/eslint', 'shadcn-nuxt', '@nuxtjs/supabase', '@vite-pwa/nuxt'],
@@ -48,6 +36,10 @@ export default defineNuxtConfig({
       // App shell only: hashed build assets, icons and the manifest. SSR pages are never precached.
       globPatterns: ['**/*.{js,css,png,ico,svg,woff2}'],
     },
+    // Icons: generated from public/favicon.svg, see pwa-assets.config.ts.
+    pwaAssets: {
+      config: true,
+    },
     registerType: 'prompt',
     manifest: {
       name: 'House Management',
@@ -61,28 +53,11 @@ export default defineNuxtConfig({
       orientation: 'portrait',
       theme_color: THEME_COLOR,
       background_color: '#ffffff',
-      icons: [
-        {
-          src: 'pwa-192x192.png',
-          sizes: '192x192',
-          type: 'image/png',
-        },
-        {
-          src: 'pwa-512x512.png',
-          sizes: '512x512',
-          type: 'image/png',
-        },
-        {
-          src: 'maskable-icon-512x512.png',
-          sizes: '512x512',
-          type: 'image/png',
-          purpose: 'maskable',
-        },
-      ],
     },
-    // The SW is only built for production (`nuxt build`); enable this to debug it under `nuxt dev`.
+    // Also run the SW (and serve the manifest) under `nuxt dev`.
     devOptions: {
-      enabled: false,
+      enabled: true,
+      type: 'module',
     },
   },
   shadcn: {

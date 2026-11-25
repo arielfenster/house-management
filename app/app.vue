@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- Adds <link rel="manifest"> (@vite-pwa/nuxt); renders nothing. -->
-    <NuxtPwaManifest />
+    <!-- @vite-pwa/nuxt: adds the manifest, favicon, apple-touch-icon and theme-color tags to <head>; renders nothing. -->
+    <NuxtPwaAssets />
     <NuxtRouteAnnouncer />
     <NuxtLayout>
       <NuxtPage />
