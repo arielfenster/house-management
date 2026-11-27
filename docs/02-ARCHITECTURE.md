@@ -11,7 +11,7 @@ Supabase pg_cron ─ pg_net HTTP POST (secret) ─► /api/cron/reminders ─ se
 ## Frontend vs server responsibilities
 **Direct supabase-js from the browser (RLS-protected):** simple CRUD — tasks, categories/rooms, files metadata, shopping items/sections, subscriptions, profile prefs, signed URLs. Fast and no boilerplate routes.
 **Nuxt server routes (`server/api/`)**, only where logic or secrets are needed:
-- `POST /api/tasks/[id]/complete` — computes next due date (shared pure TS function), calls the `complete_task` RPC (atomic: insert completion + advance/close task).
+- `POST /api/tasks/[id]/complete` — computes next due date (shared pure TS function, household timezone), calls the `complete_task` RPC (atomic: insert completion + advance/close task). Body `{ expectedDueDate }` (the due date the user saw) → 409 if the task changed meanwhile. Logic in `server/utils/complete-task.ts` (tested against the local DB); undo is the `uncomplete_task` RPC called directly from the client (no server logic needed).
 - `DELETE /api/files/[id]` — remove storage object then row.
 - `POST /api/push/test` — send a test notification to caller's devices.
 - `POST /api/cron/reminders` — scheduler target (service role, secret-protected).

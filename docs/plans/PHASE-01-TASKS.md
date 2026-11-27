@@ -16,7 +16,7 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 - [x] TASKS-002: Migration — `tasks` (incl. `last_completed_at`), `task_completions`, constraints, indexes, `complete_task` RPC (sets `last_completed_at`)
 - [x] TASKS-003: RLS for tasks/completions/categories/rooms + tests (04 matrix items 1–6, 10)
 - [x] TASKS-004: `shared/recurrence.ts` pure functions + exhaustive unit tests (month-end, leap, early/late, tz "today")
-- [ ] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo (restores `due_date` and `last_completed_at`)
+- [x] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo (restores `due_date` and `last_completed_at`)
 - [ ] TASKS-006: Task list UI: rows, due labels, sort, quick add
 - [ ] TASKS-007: `ResponsiveSheet` + task create/edit form (type, recurrence, assignee; no private toggle in v1 — D15)
 - [ ] TASKS-008: `CreatableSelect` for category and room (create inline, auto-select, rename/delete)
