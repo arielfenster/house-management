@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeRecurrence, describeSchedule, doneLabel, dueLabel, sortTasks } from './task-list'
+import { describeCompletion, describeRecurrence, describeSchedule, doneLabel, dueLabel, sortTasks } from './task-list'
 
 const TODAY = '2026-11-28'
 
@@ -99,5 +99,19 @@ describe('doneLabel', () => {
     expect(doneLabel('2025-12-31T08:00:00Z', 'UTC', TODAY)).toBe('Done Dec 31, 2025')
     // 23:30 UTC on Nov 27 is already Nov 28 in Jerusalem.
     expect(doneLabel('2026-11-27T23:30:00Z', 'Asia/Jerusalem', TODAY)).toBe('Done today')
+  })
+})
+
+describe('describeCompletion', () => {
+  it('compares the completion day (household timezone) with the due date', () => {
+    expect(describeCompletion('2026-11-20T09:00:00Z', '2026-11-18', 'UTC', TODAY)).toEqual({ date: 'Nov 20', timing: 'late', timingText: '2 days late' })
+    expect(describeCompletion('2026-11-27T09:00:00Z', '2026-11-28', 'UTC', TODAY)).toEqual({ date: 'Yesterday', timing: 'early', timingText: '1 day early' })
+    expect(describeCompletion('2026-11-28T09:00:00Z', '2026-11-28', 'UTC', TODAY)).toEqual({ date: 'Today', timing: 'on_time', timingText: 'On time' })
+    expect(describeCompletion('2025-06-01T09:00:00Z', null, 'UTC', TODAY)).toEqual({ date: 'Jun 1, 2025', timing: null, timingText: null })
+  })
+
+  it('uses the household day, not UTC: 22:30 UTC on the due date is already the next day in Jerusalem', () => {
+    expect(describeCompletion('2026-11-26T22:30:00Z', '2026-11-26', 'Asia/Jerusalem', TODAY).timingText).toBe('1 day late')
+    expect(describeCompletion('2026-11-26T22:30:00Z', '2026-11-26', 'UTC', TODAY).timingText).toBe('On time')
   })
 })

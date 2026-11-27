@@ -95,11 +95,29 @@ async function main() {
     oneTime('לקנות מנורה לסלון', null, null, 'Living room'),
     oneTime('Call the plumber about the boiler', null, 'Maintenance', null),
   ]
-  const { error: insertError } = await admin.from('tasks').insert(
+  const { data: inserted, error: insertError } = await admin.from('tasks').insert(
     tasks.map(t => ({ ...t, household_id: householdId, created_by: userId })),
-  )
+  ).select('id, title')
   if (insertError) {
     throw new Error(`insert tasks: ${insertError.message}`)
+  }
+
+  // Some completion history for the task sheet: "Water plants" done weekly, sometimes late.
+  const waterPlants = inserted?.find(t => t.title === 'Water plants')
+  if (waterPlants) {
+    const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
+    const history: [doneDaysAgo: number, dueDaysAgo: number][] = [[7, 7], [15, 16], [20, 23], [30, 30]]
+    const { error: historyError } = await admin.from('task_completions').insert(history.map(([done, dueAgo]) => ({
+      task_id: waterPlants.id,
+      household_id: householdId,
+      completed_by: userId,
+      completed_at: daysAgo(done),
+      due_date_at_completion: due(-dueAgo),
+    })))
+    if (historyError) {
+      throw new Error(`insert history: ${historyError.message}`)
+    }
+    await admin.from('tasks').update({ last_completed_at: daysAgo(7) }).eq('id', waterPlants.id)
   }
   console.log(`Demo ready: ${tasks.length} tasks in "Our home" (${TIMEZONE}). Log in as ${DEMO_EMAIL}.`)
 }

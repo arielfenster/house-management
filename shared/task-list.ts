@@ -168,3 +168,49 @@ export function doneLabel(completedAt: string, timeZone: string, today: string):
   }
   return `Done ${formatDate(day, today, 'short')}`
 }
+
+export type CompletionTiming = 'early' | 'on_time' | 'late'
+
+export interface CompletionDescription {
+  /** The completion day: "Today", "Yesterday", "Nov 20" (with the year if it differs). */
+  date: string
+  /** Null when the task had no due date. */
+  timing: CompletionTiming | null
+  /** "On time", "2 days late", "1 day early"; null without a due date. */
+  timingText: string | null
+}
+
+/**
+ * One history entry (TASKS-010): when it was done (household timezone) and how that compares with the date it
+ * was due (`due_date_at_completion`).
+ */
+export function describeCompletion(
+  completedAt: string,
+  dueDateAtCompletion: string | null,
+  timeZone: string,
+  today: string,
+): CompletionDescription {
+  const day = localToday(timeZone, new Date(completedAt))
+  const ago = daysBetween(day, today)
+  const date = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : formatDate(day, today, 'short')
+  if (!dueDateAtCompletion) {
+    return {
+      date,
+      timing: null,
+      timingText: null,
+    }
+  }
+  const late = daysBetween(dueDateAtCompletion, day)
+  if (late === 0) {
+    return {
+      date,
+      timing: 'on_time',
+      timingText: 'On time',
+    }
+  }
+  return {
+    date,
+    timing: late > 0 ? 'late' : 'early',
+    timingText: late > 0 ? `${plural(late, 'day')} late` : `${plural(-late, 'day')} early`,
+  }
+}

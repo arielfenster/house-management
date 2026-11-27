@@ -15,7 +15,7 @@ import {
   type TaskFormValues,
 } from '#shared/validation/task'
 
-// Task create/edit form (TASKS-007, category/room TASKS-008) in a bottom sheet (phone) / dialog (desktop).
+// Task create/edit form (TASKS-007, category/room TASKS-008, history TASKS-010) in a bottom sheet (phone) / dialog (desktop).
 const props = defineProps<{
   /** The task being edited; null creates a new one. */
   task: TaskListItem | null
@@ -24,6 +24,8 @@ const props = defineProps<{
   members: HouseholdMember[]
   /** Today in the household timezone (`YYYY-MM-DD`). */
   today: string
+  /** Household timezone (completion history dates). */
+  timezone: string
   /** Saves; resolves to an error message, or null on success. */
   save: (id: string | null, columns: TaskFormColumns) => Promise<string | null>
 }>()
@@ -164,6 +166,9 @@ function remove() {
 <template>
   <ResponsiveSheet v-model:open="open" :title="isEdit ? 'Edit task' : 'New task'" :prevent-auto-focus="isEdit">
     <form class="space-y-4 pb-1" novalidate @submit.prevent="submit">
+      <!-- Editing: last completion and history first (TASKS-010). -->
+      <TaskHistory v-if="props.task" :task-id="props.task.id" :members="props.members" :timezone="props.timezone" :today="props.today" />
+
       <FormField
         id="task-title"
         v-model="form.title"

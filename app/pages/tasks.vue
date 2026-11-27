@@ -188,6 +188,7 @@ async function onListsChanged() {
       :initial-title="initialTitle"
       :members="members"
       :today="today"
+      :timezone="timezone"
       :save="saveTask"
       @delete="deleteTask"
       @lists-changed="onListsChanged"
