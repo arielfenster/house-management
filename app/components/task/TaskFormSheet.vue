@@ -15,7 +15,7 @@ import {
   type TaskFormValues,
 } from '#shared/validation/task'
 
-// Task create/edit form (TASKS-007) in a bottom sheet (phone) / dialog (desktop). Category and room: TASKS-008.
+// Task create/edit form (TASKS-007, category/room TASKS-008) in a bottom sheet (phone) / dialog (desktop).
 const props = defineProps<{
   /** The task being edited; null creates a new one. */
   task: TaskListItem | null
@@ -30,7 +30,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   delete: [task: TaskListItem]
+  /** A category or room was renamed or deleted: task rows showing its name need a refresh. */
+  listsChanged: []
 }>()
+
+const categories = useTaskList('task_categories')
+const rooms = useTaskList('rooms')
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -44,6 +49,8 @@ function initialValues(): TaskFormValues {
     recurrenceInterval: String(task?.recurrenceInterval ?? 1),
     recurrenceUnit: task?.recurrenceUnit ?? 'week',
     assignedTo: task?.assignedTo ?? '',
+    categoryId: task?.categoryId ?? '',
+    roomId: task?.roomId ?? '',
   }
 }
 
@@ -230,6 +237,30 @@ function remove() {
           {{ scheduleSummary }}
         </p>
       </div>
+
+      <CreatableSelect
+        id="task-category"
+        v-model="form.categoryId"
+        label="Category"
+        :options="categories.values.value"
+        :create="categories.create"
+        :rename="categories.rename"
+        :remove="categories.remove"
+        delete-hint="Tasks using it keep everything else."
+        @changed="emit('listsChanged')"
+      />
+
+      <CreatableSelect
+        id="task-room"
+        v-model="form.roomId"
+        label="Room"
+        :options="rooms.values.value"
+        :create="rooms.create"
+        :rename="rooms.rename"
+        :remove="rooms.remove"
+        delete-hint="Tasks in it keep everything else."
+        @changed="emit('listsChanged')"
+      />
 
       <FormSelect id="task-assignee" v-model="form.assignedTo" label="Assigned to" :options="assigneeOptions" :error="errors.assignedTo" />
 

@@ -18,7 +18,7 @@ Compact list rows (min 44px touch target) inside one rounded, bordered list box 
 
 ## Interaction patterns
 - **Forms:** Drawer (bottom sheet) on mobile, Dialog on desktop — one shared `ResponsiveSheet` component. Autofocus first field; Enter submits.
-- **Creatable select** (`CreatableSelect` component): searchable list + "Add new…" row; creating shows a tiny inline input/dialog without leaving the form and **auto-selects the new value**. Used for category, room, file group. Optional fields allow "None".
+- **Creatable select** (`CreatableSelect` component): searchable list + "Add new…" row; creating shows a tiny inline input/dialog without leaving the form and **auto-selects the new value**. Used for category, room, file group. Optional fields allow "None". Implemented in TASKS-008 as an inline panel below the field (works inside bottom sheets); values are renamed/deleted from a pencil button per row; Esc closes only the panel.
 - **Inline editing:** shopping items, task title where practical.
 - **Feedback:** toast for success/error with undo for destructive actions (prefer undo over confirmation dialogs). Skeletons for loading, short helpful empty states.
 - **Optimistic UI** for check/uncheck, add, reorder; roll back + toast on failure.

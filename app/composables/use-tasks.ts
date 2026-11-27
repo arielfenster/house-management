@@ -14,7 +14,9 @@ export interface TaskListItem {
   dueDate: string | null
   recurrenceUnit: RecurrenceUnit | null
   recurrenceInterval: number | null
+  categoryId: string | null
   categoryName: string | null
+  roomId: string | null
   roomName: string | null
   assignedTo: string | null
   lastCompletedAt: string | null
@@ -32,7 +34,7 @@ interface CompleteResponse {
 
 const UNDO_TOAST_MS = 8000
 
-const TASK_COLUMNS = 'id, title, description, kind, due_date, recurrence_unit, recurrence_interval, assigned_to, last_completed_at, created_at, task_categories(name), rooms(name)'
+const TASK_COLUMNS = 'id, title, description, kind, due_date, recurrence_unit, recurrence_interval, assigned_to, category_id, room_id, last_completed_at, created_at, task_categories(name), rooms(name)'
 
 interface TaskRow {
   id: string
@@ -43,6 +45,8 @@ interface TaskRow {
   recurrence_unit: string | null
   recurrence_interval: number | null
   assigned_to: string | null
+  category_id: string | null
+  room_id: string | null
   last_completed_at: string | null
   created_at: string
   task_categories: { name: string } | null
@@ -58,7 +62,9 @@ function toItem(row: TaskRow): TaskListItem {
     dueDate: row.due_date,
     recurrenceUnit: isRecurrenceUnit(row.recurrence_unit) ? row.recurrence_unit : null,
     recurrenceInterval: row.recurrence_interval,
+    categoryId: row.category_id,
     categoryName: row.task_categories?.name ?? null,
+    roomId: row.room_id,
     roomName: row.rooms?.name ?? null,
     assignedTo: row.assigned_to,
     lastCompletedAt: row.last_completed_at,
@@ -147,7 +153,9 @@ export function useTasks() {
       recurrenceUnit: null,
       recurrenceInterval: null,
       description: null,
+      categoryId: null,
       categoryName: null,
+      roomId: null,
       roomName: null,
       assignedTo: null,
       lastCompletedAt: null,

@@ -19,7 +19,7 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 - [x] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo (restores `due_date` and `last_completed_at`)
 - [x] TASKS-006: Task list UI: rows, due labels, sort, quick add
 - [x] TASKS-007: `ResponsiveSheet` + task create/edit form (type, recurrence, assignee; no private toggle in v1 — D15)
-- [ ] TASKS-008: `CreatableSelect` for category and room (create inline, auto-select, rename/delete)
+- [x] TASKS-008: `CreatableSelect` for category and room (create inline, auto-select, rename/delete)
 - [ ] TASKS-009: Filters (All/Upcoming/Overdue/Completed + category/room/type) and search
 - [ ] TASKS-010: Detail view: last completion (`last_completed_at`) + completion history
 - [ ] TASKS-011: Playwright e2e (create, complete recurring, custom category) + mobile viewport check

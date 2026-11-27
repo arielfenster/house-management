@@ -31,11 +31,28 @@ export const completeTaskBodySchema = v.object({
   expectedDueDate: v.optional(v.nullable(isoDate)),
 })
 
+// Category / room names (task_categories, rooms): 1–50 characters, unique per household ignoring case.
+export const TASK_LIST_NAME_MAX_LENGTH = 50
+
+export const taskListNameSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.nonEmpty('Enter a name.'),
+  v.maxLength(TASK_LIST_NAME_MAX_LENGTH, `Use at most ${TASK_LIST_NAME_MAX_LENGTH} characters.`),
+)
+
+/** Optional reference to a category/room in the form: '' (None) → null, otherwise an id. */
+export const optionalIdSchema = v.pipe(
+  v.string(),
+  v.transform(text => text || null),
+  v.nullable(v.pipe(v.string(), v.uuid('Choose a value from the list.'))),
+)
+
 /**
  * Task create/edit form (TASKS-007). Values are what the form holds (strings from inputs); the output is
  * normalized: trimmed text, `null` for empty optional fields, a number interval. Recurring tasks need an
  * interval, a unit and a next due date; one-time tasks have an optional due date.
- * Category and room are added with CreatableSelect in TASKS-008; visibility is always shared in v1 (D15).
+ * Category and room come from CreatableSelect (TASKS-008); visibility is always shared in v1 (D15).
  */
 export const taskFormSchema = v.pipe(
   v.object({
@@ -69,6 +86,8 @@ export const taskFormSchema = v.pipe(
       v.transform(text => text || null),
       v.nullable(v.pipe(v.string(), v.uuid('Choose a member.'))),
     ),
+    categoryId: optionalIdSchema,
+    roomId: optionalIdSchema,
   }),
   v.forward(
     v.check(
@@ -95,6 +114,9 @@ export interface TaskFormValues {
   recurrenceInterval: string
   recurrenceUnit: RecurrenceUnit
   assignedTo: string
+  /** '' = None. */
+  categoryId: string
+  roomId: string
 }
 
 export type TaskFormOutput = v.InferOutput<typeof taskFormSchema>
@@ -108,6 +130,8 @@ export interface TaskFormColumns {
   recurrence_unit: RecurrenceUnit | null
   recurrence_interval: number | null
   assigned_to: string | null
+  category_id: string | null
+  room_id: string | null
 }
 
 export function taskFormToColumns(form: TaskFormOutput): TaskFormColumns {
@@ -120,6 +144,8 @@ export function taskFormToColumns(form: TaskFormOutput): TaskFormColumns {
     recurrence_unit: recurring ? form.recurrenceUnit : null,
     recurrence_interval: recurring ? form.recurrenceInterval : null,
     assigned_to: form.assignedTo,
+    category_id: form.categoryId,
+    room_id: form.roomId,
   }
 }
 

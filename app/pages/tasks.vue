@@ -76,6 +76,7 @@ function openTask(task: TaskListItem) {
       :today="today"
       :save="saveTask"
       @delete="deleteTask"
+      @lists-changed="refresh()"
     />
   </div>
 </template>

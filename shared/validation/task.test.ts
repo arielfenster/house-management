@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import { fieldErrors } from './auth'
-import { completeTaskBodySchema, quickAddTaskSchema, taskFormSchema, taskFormToColumns, type TaskFormValues } from './task'
+import { completeTaskBodySchema, quickAddTaskSchema, taskFormSchema, taskFormToColumns, taskListNameSchema, type TaskFormValues } from './task'
 
 const MEMBER = '7d1f3c1e-8a2b-4c3d-9e4f-5a6b7c8d9e0f'
 
@@ -14,6 +14,8 @@ function form(overrides: Partial<TaskFormValues> = {}): TaskFormValues {
     recurrenceInterval: '1',
     recurrenceUnit: 'week',
     assignedTo: '',
+    categoryId: '',
+    roomId: '',
     ...overrides,
   }
 }
@@ -86,6 +88,8 @@ describe('taskFormToColumns', () => {
       recurrence_unit: null,
       recurrence_interval: null,
       assigned_to: null,
+      category_id: null,
+      room_id: null,
     })
   })
 
@@ -106,5 +110,20 @@ describe('other task schemas', () => {
     expect(v.safeParse(completeTaskBodySchema, { expectedDueDate: null }).success).toBe(true)
     expect(v.safeParse(completeTaskBodySchema, { expectedDueDate: '2026-12-01' }).success).toBe(true)
     expect(v.safeParse(completeTaskBodySchema, { expectedDueDate: 'tomorrow' }).success).toBe(false)
+  })
+})
+
+describe('category / room', () => {
+  it('form: empty is None (null), otherwise an id', () => {
+    const out = v.parse(taskFormSchema, form({ categoryId: MEMBER, roomId: '' }))
+    expect(taskFormToColumns(out)).toMatchObject({ category_id: MEMBER, room_id: null })
+    expect(errors(form({ roomId: 'kitchen' })).roomId).toBe('Choose a value from the list.')
+  })
+
+  it('names are trimmed, required and at most 50 characters', () => {
+    expect(v.parse(taskListNameSchema, '  Garden ')).toBe('Garden')
+    expect(v.parse(taskListNameSchema, 'מרפסת')).toBe('מרפסת')
+    expect(v.safeParse(taskListNameSchema, '   ').success).toBe(false)
+    expect(v.safeParse(taskListNameSchema, 'x'.repeat(51)).success).toBe(false)
   })
 })

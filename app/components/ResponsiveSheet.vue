@@ -26,7 +26,8 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
 
 <template>
   <Dialog v-if="isDesktop" v-model:open="open">
-    <DialogContent class="sm:max-w-md" @open-auto-focus="onOpenAutoFocus">
+    <!-- Long forms scroll inside the dialog instead of overflowing short desktop windows. -->
+    <DialogContent class="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md" @open-auto-focus="onOpenAutoFocus">
       <DialogHeader>
         <DialogTitle><span dir="auto">{{ props.title }}</span></DialogTitle>
         <DialogDescription :class="props.description ? undefined : 'sr-only'">
