@@ -30,3 +30,6 @@ logs
 test-results
 playwright-report
 blob-report
+
+# Vercel (local `NITRO_PRESET=vercel` builds, `vercel link`)
+.vercel

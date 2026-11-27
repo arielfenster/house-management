@@ -60,6 +60,14 @@ export default defineNuxtConfig({
       type: 'module',
     },
   },
+  nitro: {
+    vercel: {
+      functions: {
+        // Same region as the Supabase project (eu-central-1, Frankfurt): SSR queries stay local (08-DEPLOYMENT.md).
+        regions: ['fra1'],
+      },
+    },
+  },
   shadcn: {
     prefix: '',
     componentDir: '@/components/ui',
