@@ -1,6 +1,6 @@
 # Phase 1: Tasks
 
-Status: Not Started
+Status: In Progress
 
 ## Goal
 Make household task management usable daily.
@@ -12,7 +12,7 @@ Phase 0 done; schema in 03 approved; Decisions D10 (completion-date anchor) and 
 Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks` UI.
 
 ## Implementation
-- [ ] TASKS-001: Migration — `task_categories`, `rooms` (+ seeding in `create_household`, backfill existing households)
+- [x] TASKS-001: Migration — `task_categories`, `rooms` (+ seeding in `create_household`, backfill existing households)
 - [ ] TASKS-002: Migration — `tasks` (incl. `last_completed_at`), `task_completions`, constraints, indexes, `complete_task` RPC (sets `last_completed_at`)
 - [ ] TASKS-003: RLS for tasks/completions/categories/rooms + tests (04 matrix items 1–6, 10)
 - [ ] TASKS-004: `shared/recurrence.ts` pure functions + exhaustive unit tests (month-end, leap, early/late, tz "today")

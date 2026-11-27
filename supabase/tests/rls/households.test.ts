@@ -52,6 +52,15 @@ describe('create_household', () => {
 		expect(members.data).toEqual([{ user_id: u.id }]);
 	});
 
+	it('seeds default task categories and rooms (TASKS-001), visible to the creator', async () => {
+		const u = await createUser('seeded');
+		const id = await createHousehold(u);
+		const categories = await u.client.from('task_categories').select('name').eq('household_id', id).order('name');
+		expect(categories.data?.map((c) => c.name)).toEqual(['Cleaning', 'General', 'Maintenance']);
+		const rooms = await u.client.from('rooms').select('name').eq('household_id', id).order('name');
+		expect(rooms.data?.map((r) => r.name)).toEqual(['Balcony', 'Bathroom', 'Bedroom', 'Kitchen', 'Living room']);
+	});
+
 	it('refuses a user who is already in a household', async () => {
 		const { error } = await w.a1.client.rpc('create_household', {
 			p_name: 'Second',

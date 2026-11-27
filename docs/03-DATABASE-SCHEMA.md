@@ -39,7 +39,8 @@ Created by a trigger on `auth.users` insert (name from metadata or email prefix)
 `household_id` → households (cascade), `user_id` → auth.users (cascade), `joined_at`. PK `(household_id, user_id)`; **unique `(user_id)`** (one household per user, see decisions). No roles column: all members equal.
 
 ### task_categories / rooms / file_groups
-Same shape, separate tables (different future behavior; trivial cost): `id`, `household_id` (cascade), `name` not null, `created_at`, **unique `(household_id, lower(name))`**.
+Same shape, separate tables (different future behavior; trivial cost): `id`, `household_id` (cascade), `name` not null (1–50 chars), `created_at`, **unique `(household_id, lower(name))`**, plus `unique (id, household_id)` as the target of composite foreign keys (a task can only reference its own household's values).
+Implemented for task_categories/rooms in TASKS-001: defaults are Cleaning/Maintenance/General and Kitchen/Bathroom/Living room/Bedroom/Balcony, inserted by `private.seed_task_lists` from `create_household`; households created earlier were backfilled by the migration.
 Household-scoped, **no system rows**: defaults (Cleaning/Maintenance/General; Kitchen/Bathroom/…; Manuals/Receipts/General files) are copied in by the `create_household` function. "Built-in" protection is a UI nicety only (optional `is_default` bool is NOT included; add later if needed). Deleting a value: `on delete set null` on referencing columns — except `files.group_id`, see below.
 
 ### notes (foundation only, no UI)
