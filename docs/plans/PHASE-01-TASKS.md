@@ -13,7 +13,7 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 
 ## Implementation
 - [x] TASKS-001: Migration — `task_categories`, `rooms` (+ seeding in `create_household`, backfill existing households)
-- [ ] TASKS-002: Migration — `tasks` (incl. `last_completed_at`), `task_completions`, constraints, indexes, `complete_task` RPC (sets `last_completed_at`)
+- [x] TASKS-002: Migration — `tasks` (incl. `last_completed_at`), `task_completions`, constraints, indexes, `complete_task` RPC (sets `last_completed_at`)
 - [ ] TASKS-003: RLS for tasks/completions/categories/rooms + tests (04 matrix items 1–6, 10)
 - [ ] TASKS-004: `shared/recurrence.ts` pure functions + exhaustive unit tests (month-end, leap, early/late, tz "today")
 - [ ] TASKS-005: `POST /api/tasks/[id]/complete` route (+ concurrent-completion guard) and undo (restores `due_date` and `last_completed_at`)

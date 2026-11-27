@@ -176,3 +176,29 @@ export async function cleanup(): Promise<void> {
 		await admin.auth.admin.deleteUser(id);
 	}
 }
+
+export type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
+
+/** Inserts a task as `user` (RLS applies); defaults to a shared one-time task. Returns its id. */
+export async function createTask(
+	user: TestUser,
+	householdId: string,
+	fields: Partial<TaskInsert> = {},
+): Promise<string> {
+	const { data, error } = await user.client
+		.from('tasks')
+		.insert({ household_id: householdId, title: 'Water plants', kind: 'one_time', ...fields })
+		.select('id')
+		.single();
+	if (error) {
+		throw new Error(`createTask failed: ${error.message}`);
+	}
+	return data.id;
+}
+
+/** `YYYY-MM-DD`, `days` from today (UTC; test households use the UTC timezone). */
+export function isoDate(days = 0): string {
+	const d = new Date();
+	d.setUTCDate(d.getUTCDate() + days);
+	return d.toISOString().slice(0, 10);
+}

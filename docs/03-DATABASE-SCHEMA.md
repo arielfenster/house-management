@@ -1,6 +1,6 @@
-# 03 — Database Schema (PROPOSAL — not approved, no migrations exist)
+# 03 — Database Schema
 
-Status: **Proposed.** Do not create migrations until this is reviewed and approved.
+Status: **Approved**; implemented phase by phase (Phase 0: profiles, households, members, notes; Phase 1: task tables). Implementation notes below record where the migrations refine this design.
 All tables live in `public`, have RLS enabled, and use `uuid` PKs (`gen_random_uuid()`) and `timestamptz` timestamps.
 
 ## Diagram
@@ -64,9 +64,12 @@ Household-scoped, **no system rows**: defaults (Cleaning/Maintenance/General; Ki
 Constraints: kind/recurrence consistency check; private ⇒ (assigned_to is null or assigned_to = created_by).
 Redundant/derivable: `last_completed_at` is stored (D4) for cheap display without a join; it is maintained by `complete_task` and by undo (reset to the previous completion). `due_date` for recurring is technically derivable but is stored: it is the hot filter/sort/notification column and its computation policy (see TASKS.md) must not be re-run on every read.
 Indexes: `(household_id, due_date)` where `completed_at is null`; `(assigned_to)`; trigram/ILIKE on title is unnecessary at this scale (seq scan).
+Implemented in TASKS-002 with: `created_by` default `auth.uid()`, **on delete set null** (shared tasks survive a deleted account); `category_id`/`room_id` as composite FKs `(x, household_id)` → `(id, household_id)` with `on delete set null (x)`; title 1–200 chars, description ≤ 2000, interval 1–999; assignee-is-member trigger (`assignee_not_member`); members who leave are unassigned by trigger; making a completed one-time task recurring clears `completed_at`; only the creator changes `visibility` (`only_creator_can_change_visibility`); `completed_at`/`last_completed_at` are written only by the RPCs.
 
 ### task_completions
-`id`, `task_id` → tasks (cascade), `household_id` (denormalized for RLS speed), `completed_by` → auth.users (set null), `completed_at` timestamptz not null default now(), `due_date_at_completion` date null (what it was due; enables history display "done 3 days late"). Index `(task_id, completed_at desc)`. Insert only via `complete_task` RPC; no update (delete allowed to creator/ members who can see the task — "undo").
+`id`, `task_id` → tasks (cascade), `household_id` (denormalized for RLS speed), `completed_by` → auth.users (set null), `completed_at` timestamptz not null default now(), `due_date_at_completion` date null (what it was due; enables history display "done 3 days late"). Index `(task_id, completed_at desc)`. Insert only via `complete_task` RPC; no update; delete only via `uncomplete_task` (undo of the latest completion). Both one-time and recurring completions are recorded (D21).
+
+Implemented in TASKS-002 (`supabase/migrations/*_tasks.sql`): `(task_id, household_id)` → `tasks (id, household_id)` composite FK keeps `household_id` consistent. RPCs: `complete_task(p_task_id, p_expected_due_date, p_next_due_date)` (recurring: expected due date must match — concurrent completion guard — and the next date must be after today in the household timezone) and `uncomplete_task(p_task_id, p_completion_id)`.
 
 ### files
 `id`, `household_id`, `uploaded_by`, `group_id` null → file_groups **on delete set null** (null displays as "General files"; so deleting a group never loses files), `storage_path` text unique not null (`{household_id}/{id}/{sanitized_name}`), `original_name` not null, `description` text not null default `''`, `mime_type` not null, `size_bytes` bigint not null, `created_at`. Files are household-shared only (no private files; YAGNI). Search: `ILIKE` over `description || original_name`; add `pg_trgm` GIN index only if it gets slow.

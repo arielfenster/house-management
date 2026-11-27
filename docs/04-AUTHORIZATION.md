@@ -26,7 +26,7 @@ Private-task **UI** is deferred (D15), but the policies below are implemented an
 | household_members | member of same household | RPC only | none | self (leave) |
 | profiles | self or co-member | trigger | self | cascade |
 | tasks, notes | creator if private; member if shared | `created_by=auth.uid()` and member; assignee must be member | private: creator; shared: any member; `visibility` change: creator only | same as update |
-| task_completions | can see parent task | via `complete_task` RPC (invoker; checks task visibility) | none | can see parent task |
+| task_completions | can see parent task | `complete_task` RPC only (security definer, checks task visibility, D21) | none | `uncomplete_task` RPC only (latest completion; can see parent task) |
 | categories/rooms/file_groups | member | member | member | member |
 | files (+storage) | member | member, `uploaded_by=auth.uid()` | member (description/group) | member |
 | shopping_* | member | member | member | member |

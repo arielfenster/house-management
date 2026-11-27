@@ -113,17 +113,79 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"task_completions": {
+                  Row: {
+                    "completed_at": string,"completed_by": string | null,"due_date_at_completion": string | null,"household_id": string,"id": string,"task_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "completed_at"?: string,"completed_by"?: string | null,"due_date_at_completion"?: string | null,"household_id": string,"id"?: string,"task_id": string
+                  }
+                  Update: {
+                    "completed_at"?: string,"completed_by"?: string | null,"due_date_at_completion"?: string | null,"household_id"?: string,"id"?: string,"task_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "task_completions_task_id_household_id_fkey"
+      columns: ["task_id","household_id"]
+isOneToOne: false
+      referencedRelation: "tasks"
+      referencedColumns: ["id","household_id"]
+    }
+                  ]
+                },"tasks": {
+                  Row: {
+                    "assigned_to": string | null,"category_id": string | null,"completed_at": string | null,"created_at": string,"created_by": string | null,"description": string | null,"due_date": string | null,"household_id": string,"id": string,"kind": string,"last_completed_at": string | null,"recurrence_interval": number | null,"recurrence_unit": string | null,"remind_days_before": number | null,"room_id": string | null,"title": string,"updated_at": string,"visibility": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "assigned_to"?: string | null,"category_id"?: string | null,"completed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_date"?: string | null,"household_id": string,"id"?: string,"kind": string,"last_completed_at"?: string | null,"recurrence_interval"?: number | null,"recurrence_unit"?: string | null,"remind_days_before"?: number | null,"room_id"?: string | null,"title": string,"updated_at"?: string,"visibility"?: string
+                  }
+                  Update: {
+                    "assigned_to"?: string | null,"category_id"?: string | null,"completed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_date"?: string | null,"household_id"?: string,"id"?: string,"kind"?: string,"last_completed_at"?: string | null,"recurrence_interval"?: number | null,"recurrence_unit"?: string | null,"remind_days_before"?: number | null,"room_id"?: string | null,"title"?: string,"updated_at"?: string,"visibility"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tasks_category_id_household_id_fkey"
+      columns: ["category_id","household_id"]
+isOneToOne: false
+      referencedRelation: "task_categories"
+      referencedColumns: ["id","household_id"]
+    },{
+      foreignKeyName: "tasks_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tasks_room_id_household_id_fkey"
+      columns: ["room_id","household_id"]
+isOneToOne: false
+      referencedRelation: "rooms"
+      referencedColumns: ["id","household_id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "create_household":
+            "complete_task":
+{ Args: { "p_expected_due_date"?: string,"p_next_due_date"?: string,"p_task_id": string }; Returns: {
+              "completed_at": string,"completion_id": string,"due_date": string,"last_completed_at": string
+            }[]
+                           },
+"create_household":
 { Args: { "p_name": string,"p_timezone": string }; Returns: string
                            },
 "join_household":
 { Args: { "p_invite_code": string }; Returns: string
+                           },
+"uncomplete_task":
+{ Args: { "p_completion_id"?: string,"p_task_id": string }; Returns: {
+              "completed_at": string,"due_date": string,"last_completed_at": string
+            }[]
                            }
           }
           Enums: {
