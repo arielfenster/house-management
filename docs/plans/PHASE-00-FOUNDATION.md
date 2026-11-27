@@ -1,6 +1,6 @@
 # Phase 0: Foundation
 
-Status: In Progress
+Status: Complete (2026-11-28)
 
 ## Goal
 A secure, deployed skeleton: authentication, household create/join, private/shared RLS proven on `notes`, responsive navigation with four placeholder routes, tests and CI.
@@ -32,7 +32,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 ## Acceptance Criteria
 - [x] User can sign up, log in with email and password (no emails sent), log out
 - [x] Hebrew text can be entered and displays correctly in user-content fields
-- [ ] Household can be created; another user can join with invite code
+- [x] Household can be created; another user can join with invite code (create: production + e2e; join: RLS tests; a real second-user join in production is still to happen)
 - [x] Cross-household isolation and private/shared notes rules verified by automated tests
 - [x] Four routes render; responsive navigation works on phone and desktop widths
 - [x] Production deployment reachable over HTTPS (free-tier pause/backup behaviour documented, D12)
@@ -40,6 +40,9 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 
 ## Verification
 Run `npm run typecheck && npm run lint && npm test && npm run build`; run Playwright smoke; manual check on a real phone; confirm service role key absent from client bundle (grep build output).
+
+## Outcome
+All tasks and acceptance criteria checked. Manual phone check: app opened and installed on the user's phone from the browser menu (2026-11-28). A custom install popup was deferred to PWA-001 (Phase 5).
 
 ## Definition of Done
 All tasks checked after verification, acceptance criteria met, docs updated to match reality, deployed.
