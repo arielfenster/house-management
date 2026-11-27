@@ -30,10 +30,10 @@ function openTask(task: TaskListItem) {
   <div>
     <PageHeader title="Tasks" />
 
-    <TaskQuickAdd :add="quickAdd" class="mb-1" @more="openNew" />
+    <TaskQuickAdd :add="quickAdd" class="mb-3" @more="openNew" />
 
-    <div v-if="pending && !tasks.length" class="pt-1" aria-busy="true" aria-label="Loading tasks">
-      <div v-for="i in 5" :key="i" class="flex h-14 items-center gap-3 border-b last:border-b-0">
+    <div v-if="pending && !tasks.length" class="rounded-lg border border-foreground/20 bg-card shadow-xs" aria-busy="true" aria-label="Loading tasks">
+      <div v-for="i in 5" :key="i" class="flex h-14 items-center gap-3 border-b border-foreground/10 px-4 last:border-b-0">
         <div class="size-5 rounded-full bg-muted" />
         <div class="h-3 flex-1 rounded bg-muted" :style="{ maxWidth: `${40 + ((i * 17) % 45)}%` }" />
         <div class="h-3 w-12 rounded bg-muted" />
@@ -55,7 +55,8 @@ function openTask(task: TaskListItem) {
       <ListChecksIcon />
     </EmptyState>
 
-    <ul v-else aria-label="Tasks">
+    <!-- One bordered box with dividers between rows (docs/05: separators, not cards). -->
+    <ul v-else aria-label="Tasks" class="overflow-hidden rounded-lg border border-foreground/20 bg-card shadow-xs">
       <TaskRow
         v-for="task in tasks"
         :key="task.id"

@@ -176,8 +176,8 @@ function remove() {
         </Button>
       </div>
 
-      <fieldset v-if="recurring" class="space-y-1.5">
-        <legend class="mb-1.5 text-sm font-medium">
+      <fieldset v-if="recurring" class="space-y-2">
+        <legend class="mb-2 text-sm font-medium">
           Repeat every
         </legend>
         <div class="flex gap-2">
@@ -202,7 +202,7 @@ function remove() {
         </p>
       </fieldset>
 
-      <div class="space-y-1.5">
+      <div class="space-y-2">
         <FormField
           id="task-due"
           v-model="form.dueDate"

@@ -51,8 +51,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="space-y-1.5">
-    <label :for="props.id" class="text-sm font-medium">{{ props.label }}</label>
+  <div ref="root" class="space-y-2">
+    <label :for="props.id" class="block text-sm font-medium">{{ props.label }}</label>
     <Input
       v-bind="inputAttrs"
       :model-value="model"

@@ -14,7 +14,7 @@ Implementation (FOUNDATION-016): `FormField` defaults to `dir="auto"` (pass `dir
 - Page header is small (title + 1–2 actions). No oversized headings.
 
 ## Visual style
-Compact list rows (min 44px touch target), subtle 1px separators instead of cards, one neutral palette + one accent, system UI font (Hebrew-capable, no web font), consistent type scale (sm body, xs meta). Light + dark via Tailwind tokens (shadcn theme variables). Muted style for completed items.
+Compact list rows (min 44px touch target) inside one rounded, bordered list box (`border-foreground/20`, `shadow-xs`) with 1px dividers between rows (`border-foreground/10`) — not a card per row; rows get a muted background on hover (hover-capable devices only); form labels are block-level with 8px (`space-y-2`) above their field; one neutral palette + one accent, system UI font (Hebrew-capable, no web font), consistent type scale (sm body, xs meta). Light + dark via Tailwind tokens (shadcn theme variables). Muted style for completed items.
 
 ## Interaction patterns
 - **Forms:** Drawer (bottom sheet) on mobile, Dialog on desktop — one shared `ResponsiveSheet` component. Autofocus first field; Enter submits.

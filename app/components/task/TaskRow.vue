@@ -50,14 +50,18 @@ function onCheck() {
 </script>
 
 <template>
-  <li class="flex min-h-14 items-center gap-1 border-b last:border-b-0" :class="{ 'opacity-60': props.task.pending }">
+  <!-- `hover:` only applies on devices that can hover (Tailwind v4), so phones get no sticky highlight. -->
+  <li
+    class="flex min-h-14 items-center gap-1 border-b border-foreground/10 ps-1 pe-3 transition-colors last:border-b-0 hover:bg-muted"
+    :class="{ 'opacity-60': props.task.pending }"
+  >
     <button
       type="button"
       role="checkbox"
       :aria-checked="ticking"
       :aria-label="`Complete ${props.task.title}`"
       :disabled="props.task.pending"
-      class="group -ml-2 grid size-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      class="group grid size-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       @click="onCheck"
     >
       <span
