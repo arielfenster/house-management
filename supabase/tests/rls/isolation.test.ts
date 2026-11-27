@@ -1,5 +1,5 @@
 // docs/04-AUTHORIZATION.md test list: 1 (B1 cannot read/write any A resource) for the
-// Phase 0 tables, plus profile rules. Later phases extend this file with their tables.
+// Phase 0 tables, plus profile rules. Task tables: rls/tasks.test.ts.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { adminClient, anonClient, cleanup, createWorld, type World } from '../helpers'
 
