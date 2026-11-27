@@ -36,7 +36,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [ ] Cross-household isolation and private/shared notes rules verified by automated tests
 - [ ] Four routes render; responsive navigation works on phone and desktop widths
 - [ ] Production deployment reachable over HTTPS (free-tier pause/backup behaviour documented, D12)
-- [ ] CI green
+- [x] CI green
 
 ## Verification
 Run `npm run typecheck && npm run lint && npm test && npm run build`; run Playwright smoke; manual check on a real phone; confirm service role key absent from client bundle (grep build output).
