@@ -19,6 +19,9 @@ npm run db:types          # regenerate types/database.types.ts after every migra
 npm run dev
 ```
 
+### Demo data
+`npm run db:seed-demo` creates a local demo account (`demo@house.test`, password in `scripts/seed-demo.ts`; local stack only) with a household and realistic tasks. Re-running resets it.
+
 ### Tests
 ```bash
 npm test             # Vitest; RLS tests run against the local stack (npm run db:start first)

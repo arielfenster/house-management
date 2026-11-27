@@ -19,7 +19,8 @@ Private-task UI (deferred, see below) — Subtasks, dependencies, kanban, priori
 Quick add (title field + Enter creates a one-time shared task; "More" opens full sheet). Row tap → detail/edit sheet. Checkbox → complete. Filters: All / Upcoming / Overdue / Completed + category, room, type chips. Search box over title/description.
 
 ## 6. UI behavior
-Compact row: checkbox, title, category/room as muted text, due label ("Today", "in 3 d", "3 d overdue" in warning colour). Recurring rows show next due and a repeat icon. Detail sheet shows last completed + expandable history (date, who, late/early). Default sort: overdue → due soonest → undated; completed hidden from All (shown in Completed).
+Compact row: checkbox, title, category/room as muted text, due label ("Today", "in 3 d", "3 d overdue" in warning colour).
+Implemented (TASKS-006, `shared/task-list.ts`): labels are "N d overdue" (amber), "Today", "Tomorrow", "in N d" up to 13 days, then the date ("Dec 18", with the year when it differs); screen readers get the long form ("Due in 3 days, Tuesday, December 1"). The meta line shows the recurrence ("Every 3 months") then category · room. Ticking shows the check for 250 ms, then the row leaves (one-time) or moves to its next due date (recurring, computed optimistically with the same function as the server); an 8-second toast offers Undo. Quick-added tasks are undated, so they sort to the end. The list refreshes when the app returns to the foreground. Recurring rows show next due and a repeat icon. Detail sheet shows last completed + expandable history (date, who, late/early). Default sort: overdue → due soonest → undated; completed hidden from All (shown in Completed).
 
 ## 7. Data requirements
 `tasks`, `task_completions`, `task_categories`, `rooms` (see 03-DATABASE-SCHEMA.md).

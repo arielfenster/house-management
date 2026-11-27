@@ -6,6 +6,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <Toaster />
+    <!-- Phones: above the bottom nav bar (h-16 + safe area), so undo toasts never cover it. -->
+    <Toaster :mobile-offset="{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }" />
   </div>
 </template>

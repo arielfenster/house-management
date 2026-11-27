@@ -45,3 +45,9 @@ export function isOnboardingPage(path: string): boolean {
   const p = pathname(path)
   return p === ROUTES.onboarding || p.startsWith(ROUTES.join)
 }
+
+/** Server API routes (`server/api/*`), so client code never hard-codes their paths. */
+export const API_ROUTES = {
+  /** POST: complete a task (body `{ expectedDueDate }`), see server/api/tasks/[id]/complete.post.ts. */
+  completeTask: (taskId: string) => `/api/tasks/${encodeURIComponent(taskId)}/complete`,
+} as const
