@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import * as v from 'valibot'
-import { PlusIcon } from '@lucide/vue'
+import { PlusIcon, SlidersHorizontalIcon } from '@lucide/vue'
 import { TASK_TITLE_MAX_LENGTH, quickAddTaskSchema, type QuickAddTaskInput } from '#shared/validation/task'
 
-// Quick add (features/TASKS.md §5): type a title, press Enter → a shared one-time task. The full form comes in TASKS-007.
+// Quick add (features/TASKS.md §5): type a title, press Enter → a shared one-time task; "More options" opens the full form.
 const props = defineProps<{
   add: (input: QuickAddTaskInput) => Promise<boolean>
+}>()
+
+const emit = defineEmits<{
+  /** "More options": open the full form with what was typed so far. */
+  more: [title: string]
 }>()
 
 const title = ref('')
@@ -39,6 +44,9 @@ async function submit() {
     />
     <Button type="submit" size="icon-lg" aria-label="Add task" :disabled="!title.trim()">
       <PlusIcon />
+    </Button>
+    <Button type="button" size="icon-lg" variant="outline" aria-label="More options" @click="emit('more', title.trim()); title = ''">
+      <SlidersHorizontalIcon />
     </Button>
   </form>
 </template>

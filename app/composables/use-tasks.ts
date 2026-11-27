@@ -3,18 +3,20 @@ import { toast } from 'vue-sonner'
 import { API_ROUTES } from '#shared/routes'
 import { isRecurrenceUnit, localToday, nextDueDate, type RecurrenceUnit } from '#shared/recurrence'
 import { dueLabel, sortTasks } from '#shared/task-list'
-import { taskErrorMessage, type QuickAddTaskInput } from '#shared/validation/task'
+import { taskErrorMessage, type QuickAddTaskInput, type TaskFormColumns } from '#shared/validation/task'
 
 /** A row of the task list (open tasks only: completed one-time tasks are hidden from the default list). */
 export interface TaskListItem {
   id: string
   title: string
+  description: string | null
   kind: 'one_time' | 'recurring'
   dueDate: string | null
   recurrenceUnit: RecurrenceUnit | null
   recurrenceInterval: number | null
   categoryName: string | null
   roomName: string | null
+  assignedTo: string | null
   lastCompletedAt: string | null
   createdAt: string
   /** Optimistic row not yet saved (quick add). */
@@ -30,7 +32,39 @@ interface CompleteResponse {
 
 const UNDO_TOAST_MS = 8000
 
-const TASK_COLUMNS = 'id, title, kind, due_date, recurrence_unit, recurrence_interval, last_completed_at, created_at, task_categories(name), rooms(name)'
+const TASK_COLUMNS = 'id, title, description, kind, due_date, recurrence_unit, recurrence_interval, assigned_to, last_completed_at, created_at, task_categories(name), rooms(name)'
+
+interface TaskRow {
+  id: string
+  title: string
+  description: string | null
+  kind: string
+  due_date: string | null
+  recurrence_unit: string | null
+  recurrence_interval: number | null
+  assigned_to: string | null
+  last_completed_at: string | null
+  created_at: string
+  task_categories: { name: string } | null
+  rooms: { name: string } | null
+}
+
+function toItem(row: TaskRow): TaskListItem {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    kind: row.kind === 'recurring' ? 'recurring' : 'one_time',
+    dueDate: row.due_date,
+    recurrenceUnit: isRecurrenceUnit(row.recurrence_unit) ? row.recurrence_unit : null,
+    recurrenceInterval: row.recurrence_interval,
+    categoryName: row.task_categories?.name ?? null,
+    roomName: row.rooms?.name ?? null,
+    assignedTo: row.assigned_to,
+    lastCompletedAt: row.last_completed_at,
+    createdAt: row.created_at,
+  }
+}
 
 /** Error code from a failed $fetch to our API (statusMessage carries the stable code, e.g. `stale_due_date`). */
 function apiErrorCode(error: unknown): string | undefined {
@@ -68,18 +102,7 @@ export function useTasks() {
       if (queryError) {
         throw createError({ statusCode: 500, statusMessage: 'Could not load tasks.' })
       }
-      return rows.map(row => ({
-        id: row.id,
-        title: row.title,
-        kind: row.kind === 'recurring' ? 'recurring' : 'one_time',
-        dueDate: row.due_date,
-        recurrenceUnit: isRecurrenceUnit(row.recurrence_unit) ? row.recurrence_unit : null,
-        recurrenceInterval: row.recurrence_interval,
-        categoryName: row.task_categories?.name ?? null,
-        roomName: row.rooms?.name ?? null,
-        lastCompletedAt: row.last_completed_at,
-        createdAt: row.created_at,
-      }))
+      return rows.map(toItem)
     },
     {
       watch: [householdId],
@@ -87,13 +110,20 @@ export function useTasks() {
     },
   )
 
-  const tasks = computed(() => sortTasks(data.value))
+  // Deletes wait for the undo window (see deleteTask); their rows stay hidden meanwhile, even across refreshes.
+  const pendingDeletes = new Map<string, ReturnType<typeof setTimeout>>()
+  const hiddenIds = ref(new Set<string>())
 
-  // The other member may have changed things: refresh when the app comes back to the foreground.
+  const tasks = computed(() => sortTasks(data.value.filter(t => !hiddenIds.value.has(t.id))))
+
   if (import.meta.client) {
     useEventListener(document, 'visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        // The other member may have changed things: refresh when the app comes back to the foreground.
         void refresh()
+      } else {
+        // Leaving the app ends the undo window: delete now rather than risk the request never being sent.
+        flushDeletes()
       }
     })
   }
@@ -116,8 +146,10 @@ export function useTasks() {
       dueDate: null,
       recurrenceUnit: null,
       recurrenceInterval: null,
+      description: null,
       categoryName: null,
       roomName: null,
+      assignedTo: null,
       lastCompletedAt: null,
       createdAt: new Date().toISOString(),
       pending: true,
@@ -214,6 +246,66 @@ export function useTasks() {
     })
   }
 
+  /** Create (no id) or update a task from the form (TASKS-007). New tasks are shared (D15). */
+  async function saveTask(id: string | null, columns: TaskFormColumns): Promise<string | null> {
+    if (!householdId.value) {
+      return null
+    }
+    const query = id
+      ? supabase.from('tasks').update(columns).eq('id', id)
+      : supabase.from('tasks').insert({ ...columns, household_id: householdId.value })
+    const { data: row, error: saveError } = await query.select(TASK_COLUMNS).single()
+    if (saveError || !row) {
+      return saveError?.message === 'assignee_not_member'
+        ? 'That person is no longer in the household.'
+        : 'Could not save the task. Please try again.'
+    }
+    replace(row.id, toItem(row))
+    return null
+  }
+
+  async function deleteNow(id: string) {
+    pendingDeletes.delete(id)
+    const { error: deleteError } = await supabase.from('tasks').delete().eq('id', id)
+    if (deleteError) {
+      toast.error('Could not delete the task.')
+    } else {
+      replace(id, null)
+    }
+    const next = new Set(hiddenIds.value)
+    next.delete(id)
+    hiddenIds.value = next
+  }
+
+  function flushDeletes() {
+    for (const [id, timer] of pendingDeletes) {
+      clearTimeout(timer)
+      void deleteNow(id)
+    }
+  }
+
+  /**
+   * Delete with undo (features/TASKS.md §10): the row disappears at once, the delete (which also removes the
+   * task's history) runs when the undo window ends, so Undo loses nothing.
+   */
+  function deleteTask(task: TaskListItem) {
+    hiddenIds.value = new Set([...hiddenIds.value, task.id])
+    pendingDeletes.set(task.id, setTimeout(() => void deleteNow(task.id), UNDO_TOAST_MS))
+    toast(`Deleted “${task.title}”`, {
+      duration: UNDO_TOAST_MS,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          clearTimeout(pendingDeletes.get(task.id))
+          pendingDeletes.delete(task.id)
+          const next = new Set(hiddenIds.value)
+          next.delete(task.id)
+          hiddenIds.value = next
+        },
+      },
+    })
+  }
+
   return {
     tasks,
     today,
@@ -222,5 +314,7 @@ export function useTasks() {
     refresh,
     quickAdd,
     complete,
+    saveTask,
+    deleteTask,
   }
 }

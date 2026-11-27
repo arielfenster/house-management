@@ -1,16 +1,36 @@
 <script setup lang="ts">
 import { ListChecksIcon } from '@lucide/vue'
+import type { TaskListItem } from '~/composables/use-tasks'
 
-// Task list (TASKS-006): quick add, open tasks sorted overdue → soonest → undated, one-tap completion with undo.
-// Detail/edit sheet, filters and search follow in TASKS-007…010.
-const { tasks, today, pending, error, refresh, quickAdd, complete } = useTasks()
+// Task list: quick add, open tasks sorted overdue → soonest → undated, one-tap completion with undo (TASKS-006),
+// create/edit/delete sheet (TASKS-007). Filters, search and history follow in TASKS-008…010.
+const { tasks, today, pending, error, refresh, quickAdd, complete, saveTask, deleteTask } = useTasks()
+const { data: members } = useHouseholdMembers()
+
+const memberNames = computed(() => new Map(members.value.map(m => [m.id, m.displayName])))
+
+const sheetOpen = ref(false)
+const editing = ref<TaskListItem | null>(null)
+const initialTitle = ref('')
+
+function openNew(title: string) {
+  editing.value = null
+  initialTitle.value = title
+  sheetOpen.value = true
+}
+
+function openTask(task: TaskListItem) {
+  editing.value = task
+  initialTitle.value = ''
+  sheetOpen.value = true
+}
 </script>
 
 <template>
   <div>
     <PageHeader title="Tasks" />
 
-    <TaskQuickAdd :add="quickAdd" class="mb-1" />
+    <TaskQuickAdd :add="quickAdd" class="mb-1" @more="openNew" />
 
     <div v-if="pending && !tasks.length" class="pt-1" aria-busy="true" aria-label="Loading tasks">
       <div v-for="i in 5" :key="i" class="flex h-14 items-center gap-3 border-b last:border-b-0">
@@ -36,7 +56,25 @@ const { tasks, today, pending, error, refresh, quickAdd, complete } = useTasks()
     </EmptyState>
 
     <ul v-else aria-label="Tasks">
-      <TaskRow v-for="task in tasks" :key="task.id" :task="task" :today="today" @complete="complete(task)" />
+      <TaskRow
+        v-for="task in tasks"
+        :key="task.id"
+        :task="task"
+        :today="today"
+        :assignee-name="task.assignedTo ? memberNames.get(task.assignedTo) : null"
+        @complete="complete(task)"
+        @open="openTask(task)"
+      />
     </ul>
+
+    <TaskFormSheet
+      v-model:open="sheetOpen"
+      :task="editing"
+      :initial-title="initialTitle"
+      :members="members"
+      :today="today"
+      :save="saveTask"
+      @delete="deleteTask"
+    />
   </div>
 </template>

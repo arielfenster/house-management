@@ -47,3 +47,66 @@ test('quick add, complete and undo a task', async ({ page }, testInfo) => {
     await deleteUser(user.email)
   }
 })
+
+// TASKS-007: full form — create a repeating task with a due date, edit it, delete it.
+test('create, edit and delete a task with the form', async ({ page }, testInfo) => {
+  const user = newUser(`taskform-${testInfo.project.name}`)
+
+  try {
+    await page.goto(ROUTES.signup)
+    await page.getByLabel('Your name').fill(user.displayName)
+    await page.getByLabel('Email').fill(user.email)
+    await page.getByLabel('Password').fill(user.password)
+    await page.getByRole('button', { name: 'Sign up' }).click()
+    await page.getByLabel('Household name').fill('E2E home')
+    await page.getByRole('button', { name: 'Create household' }).click()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page).toHaveURL(new RegExp(`${APP_HOME}$`))
+
+    // "More options" carries over what was typed.
+    await page.getByLabel('New task').fill('Clean AC filters')
+    await page.getByRole('button', { name: 'More options' }).click()
+    const sheet = page.getByRole('dialog', { name: 'New task' })
+    await expect(sheet.getByLabel('Title')).toHaveValue('Clean AC filters')
+
+    // Validation: a repeating task needs a whole-number interval.
+    await sheet.getByRole('button', { name: 'Repeats' }).click()
+    await sheet.getByLabel('Interval').fill('0')
+    await sheet.getByRole('button', { name: 'Add task' }).click()
+    await expect(sheet.getByText(/whole number/)).toBeVisible()
+
+    await sheet.getByLabel('Interval').fill('3')
+    await sheet.getByLabel('Unit').selectOption('month')
+    await sheet.getByRole('button', { name: 'Tomorrow' }).click()
+    await sheet.getByLabel('Assigned to').selectOption({ label: user.displayName })
+    await sheet.getByRole('button', { name: 'Add task' }).click()
+    await expect(sheet).toBeHidden()
+
+    const row = page.getByRole('list', { name: 'Tasks' }).getByRole('listitem').filter({ hasText: 'Clean AC filters' })
+    await expect(row).toContainText('Every 3 months')
+    await expect(row).toContainText(user.displayName)
+    await expect(row).toContainText('Tomorrow')
+
+    // Edit: becomes a one-time task without a date.
+    await row.getByRole('button', { name: /Clean AC filters/ }).click()
+    const edit = page.getByRole('dialog', { name: 'Edit task' })
+    await expect(edit.getByLabel('Title')).toHaveValue('Clean AC filters')
+    await edit.getByRole('button', { name: 'One-time' }).click()
+    await edit.getByRole('button', { name: 'No date' }).click()
+    await edit.getByLabel('Title').fill('Replace AC filters')
+    await edit.getByRole('button', { name: 'Save' }).click()
+    await expect(edit).toBeHidden()
+    const edited = page.getByRole('list', { name: 'Tasks' }).getByRole('listitem').filter({ hasText: 'Replace AC filters' })
+    await expect(edited).not.toContainText('Every 3 months')
+    await page.reload()
+    await expect(edited).toBeVisible()
+
+    // Delete (undo is tested above for completion; here the toast appears and the row goes).
+    await edited.getByRole('button', { name: /Replace AC filters/ }).click()
+    await page.getByRole('dialog', { name: 'Edit task' }).getByRole('button', { name: 'Delete' }).click()
+    await expect(page.getByText('Deleted “Replace AC filters”')).toBeVisible()
+    await expect(edited).toHaveCount(0)
+  } finally {
+    await deleteUser(user.email)
+  }
+})

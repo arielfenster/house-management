@@ -16,7 +16,8 @@ Private-task UI (deferred, see below) — Subtasks, dependencies, kanban, priori
 - I create a new category from the task form without leaving it.
 
 ## 5. Main interactions
-Quick add (title field + Enter creates a one-time shared task; "More" opens full sheet). Row tap → detail/edit sheet. Checkbox → complete. Filters: All / Upcoming / Overdue / Completed + category, room, type chips. Search box over title/description.
+Quick add (title field + Enter creates a one-time shared task; "More" opens full sheet). Row tap → detail/edit sheet.
+Implemented (TASKS-007, `TaskFormSheet`): title; One-time / Repeats toggle; "Repeat every [N] [days|weeks|months|years]"; due date ("Next due", required when repeating — defaults to today) with one-tap Today / Tomorrow / In a week and "No date"; assignee ("Anyone" or a member); notes. Validation in `shared/validation/task.ts` (`taskFormSchema`). The "More options" button next to quick add opens the sheet with the typed title. Edit has Delete: the row disappears with an 8-second Undo toast and the actual delete (which removes history) runs when the window ends, or at once if the app goes to the background. The assignee's name shows in the row's meta line. Category/room fields: TASKS-008. Checkbox → complete. Filters: All / Upcoming / Overdue / Completed + category, room, type chips. Search box over title/description.
 
 ## 6. UI behavior
 Compact row: checkbox, title, category/room as muted text, due label ("Today", "in 3 d", "3 d overdue" in warning colour).

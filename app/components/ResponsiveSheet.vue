@@ -5,7 +5,18 @@ import { useMediaQuery } from '@vueuse/core'
 const props = defineProps<{
   title: string
   description?: string
+  /**
+   * Don't move focus into the sheet when it opens (no keyboard popping up on phones), e.g. when opening a
+   * record to read or tweak it. Focus is still trapped in the sheet; Esc and Tab work as usual.
+   */
+  preventAutoFocus?: boolean
 }>()
+
+function onOpenAutoFocus(event: Event) {
+  if (props.preventAutoFocus) {
+    event.preventDefault()
+  }
+}
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -15,7 +26,7 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
 
 <template>
   <Dialog v-if="isDesktop" v-model:open="open">
-    <DialogContent class="sm:max-w-md">
+    <DialogContent class="sm:max-w-md" @open-auto-focus="onOpenAutoFocus">
       <DialogHeader>
         <DialogTitle><span dir="auto">{{ props.title }}</span></DialogTitle>
         <DialogDescription :class="props.description ? undefined : 'sr-only'">
@@ -30,7 +41,7 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
   </Dialog>
 
   <Drawer v-else v-model:open="open">
-    <DrawerContent>
+    <DrawerContent @open-auto-focus="onOpenAutoFocus">
       <DrawerHeader class="text-left">
         <DrawerTitle><span dir="auto">{{ props.title }}</span></DrawerTitle>
         <DrawerDescription :class="props.description ? undefined : 'sr-only'">
