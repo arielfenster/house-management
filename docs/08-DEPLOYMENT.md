@@ -6,7 +6,22 @@
 - **Scheduler:** Supabase **pg_cron + pg_net** → `POST https://<app>/api/cron/reminders` hourly with header `x-cron-secret`. Reason: Vercel Hobby cron is limited to once per day (±1 hour precision), which can't deliver reminders at each user's chosen hour; Vercel Pro cron or an external scheduler also work. Notes from docs: pg_net requests are fire-and-forget without retry (hourly cadence + idempotent log makes this fine); `cron.job_run_details` needs periodic cleanup (add a small cleanup job).
 
 ## Free-tier notes (D12)
-Supabase free projects are paused after about a week without activity (unverified; no API/database requests). To resume, open the project in the Supabase dashboard and click "Restore"; the reminder cron job acts as keep-alive. They also have no managed backups: document how to resume, and run a periodic `pg_dump` backup. Verify `pg_cron`/`pg_net`/Realtime availability and quotas at setup. No emails are sent (email confirmation disabled), so no SMTP provider is needed; password resets are done manually in the Supabase dashboard.
+Supabase free projects are paused after about a week without activity (unverified; no API/database requests). To resume, open the project in the Supabase dashboard and click "Restore"; the reminder cron job acts as keep-alive. They also have no managed backups: document how to resume, and run a periodic `pg_dump` backup. Verify `pg_cron`/`pg_net`/Realtime availability and quotas at setup. No emails are sent (email confirmation disabled), so no SMTP provider is needed; password resets are done manually (see "Auth settings").
+
+## Auth settings (D11, FOUNDATION-015)
+Local values live in `supabase/config.toml` `[auth]`. Production is set by hand in the dashboard (Authentication), not with `supabase config push`, because the URLs differ:
+- **Sign In / Providers:** Email enabled; **"Confirm email" off** (no emails are sent, signup returns a session immediately). All other providers, phone, anonymous sign-ins and MFA off.
+- **Minimum password length:** 6, matching `PASSWORD_MIN_LENGTH` in `shared/validation/auth.ts`.
+- **URL Configuration:** Site URL = the production app URL (`https://<app>`); redirect URLs = the same origin (`https://<app>/**`). No auth flow redirects today (no email links, no OAuth); these matter once magic links/OAuth are added.
+- **"Allow new users to sign up": turn off once both accounts exist.** Email addresses are unverified, so open signups would let anyone with the URL create (empty, household-less) accounts. The signup page then shows "Sign-up is closed". To add someone later, turn it on, let them sign up and join with the invite code, then turn it off again.
+
+**Manual password reset** (no reset emails): in the dashboard SQL Editor, run
+```sql
+update auth.users
+set encrypted_password = extensions.crypt('<new password>', extensions.gen_salt('bf')), updated_at = now()
+where email = '<user email>';
+```
+then share the new password privately; the user can sign in with it immediately. The update does not revoke refresh tokens, so other devices may stay signed in. Verified against the local stack: the old password is rejected and the new one works. Don't paste the password into anything that is saved (tickets, chat history); use a temporary one if unsure.
 
 ## Environment variables
 | Var | Scope |
@@ -20,4 +35,4 @@ Supabase free projects are paused after about a week without activity (unverifie
 PR → CI (typecheck, lint, DB types check, vitest incl. RLS tests on local Supabase, build, Playwright smoke) → merge to `main` → Vercel production deploy. Migrations: reviewed in PR, applied to prod before/with deploy (backward-compatible changes preferred).
 
 ## Checklist (Phase 0)
-Create Supabase prod project; configure Auth redirect URLs; create Vercel project; set env vars; first deploy of the hello-world authenticated app; confirm HTTPS (required for PWA/push).
+Create Supabase prod project; apply the Auth settings above (signups off after both accounts exist); create Vercel project; set env vars; first deploy of the hello-world authenticated app; confirm HTTPS (required for PWA/push).
