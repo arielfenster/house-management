@@ -16,7 +16,7 @@ Verified by web search on 2026-11-20 against official docs/community sources; **
 | Recurrence date math | Hand-written pure TS (date-only, ~40 lines) with tests; no library | Avoids Luxon/dayjs dependency; household timezone needed only to compute "today". Revisit if it grows. |
 | Tests | Vitest (unit + DB integration), Playwright (e2e) | Keep. |
 | Lint/format | ESLint (`@nuxt/eslint`) + Prettier-compatible stylistic rules | Add; part of "checks". |
-| CI | GitHub Actions: typecheck, lint, vitest, build; (RLS tests with `supabase start`) | Add in Phase 0. |
+| CI | GitHub Actions (`.github/workflows/ci.yml`): typecheck, lint; on a local `supabase start` stack: DB types check, vitest (incl. RLS), build, secret-key-in-bundle check, Playwright smoke | Added in Phase 0. |
 
 ## Not adding
 Prisma/Drizzle, Redis, separate backend, Pinia (use Nuxt `useState`/composables + `useAsyncData`), search engine, offline sync framework. Generated DB types come from `supabase gen types` and are regenerated after every migration; CI fails if `types/database.types.ts` is out of date.

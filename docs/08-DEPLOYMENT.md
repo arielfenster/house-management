@@ -17,7 +17,7 @@ Supabase free projects are paused after about a week without activity (unverifie
 | `CRON_SECRET` | server only; also stored in Supabase Vault for the pg_net job |
 
 ## Pipeline
-PR → CI (typecheck, lint, vitest incl. RLS tests on local Supabase, build) → merge to `main` → Vercel production deploy. Migrations: reviewed in PR, applied to prod before/with deploy (backward-compatible changes preferred).
+PR → CI (typecheck, lint, DB types check, vitest incl. RLS tests on local Supabase, build, Playwright smoke) → merge to `main` → Vercel production deploy. Migrations: reviewed in PR, applied to prod before/with deploy (backward-compatible changes preferred).
 
 ## Checklist (Phase 0)
 Create Supabase prod project; configure Auth redirect URLs; create Vercel project; set env vars; first deploy of the hello-world authenticated app; confirm HTTPS (required for PWA/push).

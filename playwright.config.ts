@@ -30,7 +30,8 @@ export default defineConfig({
   webServer: externalBaseURL
     ? undefined
     : {
-        command: 'npm run build && npm run preview',
+        // CI builds in its own step (then checks the bundle for secrets), so only previews here.
+        command: process.env.CI ? 'npm run preview' : 'npm run build && npm run preview',
         env: { PORT: String(PORT) },
         url: `http://localhost:${PORT}`,
         reuseExistingServer: !process.env.CI,

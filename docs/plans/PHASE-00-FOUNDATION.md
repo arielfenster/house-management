@@ -24,7 +24,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-010: AppShell: mobile bottom bar (safe-area) + desktop sidebar; `/` → `/tasks`; four placeholder pages
 - [x] FOUNDATION-011: PWA spike: `@vite-pwa/nuxt` with `injectManifest` on Nuxt 4 (manifest, icons, minimal SW); record outcome in 07-DECISIONS.md
 - [x] FOUNDATION-012: Playwright smoke test (signup → create household → navigate four routes)
-- [ ] FOUNDATION-013: GitHub Actions CI (typecheck, lint, vitest with local Supabase, build)
+- [x] FOUNDATION-013: GitHub Actions CI (typecheck, lint, vitest with local Supabase, build)
 - [ ] FOUNDATION-015: Auth config: email+password only, **disable "Confirm email"** (no emails sent), set site URL/redirects; decide on disabling public signups after both accounts exist; document manual password reset via dashboard
 - [ ] FOUNDATION-016: Hebrew content support: `dir="auto"` on shared input/text components, Hebrew-capable font fallback, verify Hebrew text entry/display and mixed Hebrew/English in a basic test
 - [ ] FOUNDATION-014: Production: Supabase prod project, Vercel project, env vars, apply migrations, first deploy
