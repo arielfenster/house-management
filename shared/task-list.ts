@@ -2,7 +2,7 @@
  * Pure helpers for the task list (features/TASKS.md §6): due labels, default sort, recurrence text.
  * Dates are household-local `YYYY-MM-DD` strings; `today` comes from `localToday(household.timezone)`.
  */
-import { daysBetween, isValidIsoDate, type RecurrenceUnit } from './recurrence'
+import { daysBetween, isValidIsoDate, localToday, type RecurrenceUnit } from './recurrence'
 
 export type DueTone = 'overdue' | 'today' | 'soon' | 'later'
 
@@ -151,4 +151,20 @@ export function describeSchedule(dueDate: string, unit: RecurrenceUnit, interval
     }).format(new Date(Date.UTC(y!, m! - 1, d!)))}`
   }
   return `${when}, then ${everyPhrase(unit, interval)} after each completion.`
+}
+
+/**
+ * When a completed task was done, for its row: "Done today", "Done yesterday", "Done Nov 27" (with the year if it
+ * differs). `completedAt` is an instant; it is shown as a date in the household timezone.
+ */
+export function doneLabel(completedAt: string, timeZone: string, today: string): string {
+  const day = localToday(timeZone, new Date(completedAt))
+  const days = daysBetween(day, today)
+  if (days === 0) {
+    return 'Done today'
+  }
+  if (days === 1) {
+    return 'Done yesterday'
+  }
+  return `Done ${formatDate(day, today, 'short')}`
 }

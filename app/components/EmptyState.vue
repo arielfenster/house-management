@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Short, helpful empty state (docs/05-UI-UX-GUIDELINES.md). Optional icon in the default slot.
+// Short, helpful empty state (docs/05-UI-UX-GUIDELINES.md). Optional icon in the default slot, button in #action.
 const props = defineProps<{
   title: string
   description?: string
@@ -17,5 +17,8 @@ const props = defineProps<{
     <p v-if="props.description" class="max-w-xs text-sm text-muted-foreground">
       {{ props.description }}
     </p>
+    <div v-if="$slots.action" class="mt-2">
+      <slot name="action" />
+    </div>
   </div>
 </template>

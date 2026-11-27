@@ -10,14 +10,20 @@ const props = defineProps<{
   today: string
   /** Display name of the assignee, if any. */
   assigneeName?: string | null
+  /** Completed tasks (Done tab): "Done Nov 27", shown instead of the due label. */
+  doneText?: string | null
 }>()
 
 const emit = defineEmits<{
   complete: []
+  /** Un-ticked a completed task. */
+  reopen: []
   open: []
 }>()
 
-const due = computed(() => dueLabel(props.task.dueDate, props.today))
+const done = computed(() => props.task.completedAt !== null)
+
+const due = computed(() => (done.value ? null : dueLabel(props.task.dueDate, props.today)))
 const recurrence = computed(() =>
   props.task.recurrenceUnit && props.task.recurrenceInterval
     ? describeRecurrence(props.task.recurrenceUnit, props.task.recurrenceInterval)
@@ -33,8 +39,9 @@ const TONE_CLASS: Record<DueTone, string> = {
   later: 'text-muted-foreground',
 }
 
-// Show the tick for a moment before the row moves or leaves (the list update itself is optimistic).
+// Show the tick (or un-tick) for a moment before the row moves or leaves (the list update itself is optimistic).
 const ticking = ref(false)
+const checked = computed(() => (done.value ? !ticking.value : ticking.value))
 const reduceMotion = usePreferredReducedMotion()
 
 function onCheck() {
@@ -43,7 +50,11 @@ function onCheck() {
   }
   ticking.value = true
   setTimeout(() => {
-    emit('complete')
+    if (done.value) {
+      emit('reopen')
+    } else {
+      emit('complete')
+    }
     ticking.value = false
   }, reduceMotion.value === 'reduce' ? 0 : 250)
 }
@@ -58,8 +69,8 @@ function onCheck() {
     <button
       type="button"
       role="checkbox"
-      :aria-checked="ticking"
-      :aria-label="`Complete ${props.task.title}`"
+      :aria-checked="checked"
+      :aria-label="done ? `Reopen ${props.task.title}` : `Complete ${props.task.title}`"
       :disabled="props.task.pending"
       class="group grid size-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       @click="onCheck"
@@ -82,7 +93,7 @@ function onCheck() {
       @click="emit('open')"
     >
       <span class="min-w-0 flex-1 py-2">
-        <span class="block truncate text-start text-sm" dir="auto" :class="{ 'text-muted-foreground line-through': ticking }">
+        <span class="block truncate text-start text-sm" dir="auto" :class="{ 'text-muted-foreground line-through': checked }">
           {{ props.task.title }}
         </span>
         <span v-if="meta.length" class="block truncate text-start text-xs text-muted-foreground">
@@ -93,6 +104,7 @@ function onCheck() {
         </span>
       </span>
 
+      <span v-if="props.doneText" class="shrink-0 ps-2 text-xs text-muted-foreground">{{ props.doneText }}</span>
       <span v-if="due" class="flex shrink-0 items-center gap-1 ps-2 text-xs" :class="TONE_CLASS[due.tone]" :title="due.description">
         <RepeatIcon v-if="props.task.kind === 'recurring'" class="size-3 opacity-70" aria-hidden="true" />
         <span aria-hidden="true">{{ due.text }}</span>

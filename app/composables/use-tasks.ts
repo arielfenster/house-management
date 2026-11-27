@@ -5,7 +5,7 @@ import { isRecurrenceUnit, localToday, nextDueDate, type RecurrenceUnit } from '
 import { dueLabel, sortTasks } from '#shared/task-list'
 import { taskErrorMessage, type QuickAddTaskInput, type TaskFormColumns } from '#shared/validation/task'
 
-/** A row of the task list (open tasks only: completed one-time tasks are hidden from the default list). */
+/** A row of the task list. Open tasks, or (Done tab) completed one-time tasks with `completedAt` set. */
 export interface TaskListItem {
   id: string
   title: string
@@ -20,6 +20,8 @@ export interface TaskListItem {
   roomName: string | null
   assignedTo: string | null
   lastCompletedAt: string | null
+  /** One-time tasks only: when it was completed (null = open). */
+  completedAt: string | null
   createdAt: string
   /** Optimistic row not yet saved (quick add). */
   pending?: boolean
@@ -34,7 +36,7 @@ interface CompleteResponse {
 
 const UNDO_TOAST_MS = 8000
 
-const TASK_COLUMNS = 'id, title, description, kind, due_date, recurrence_unit, recurrence_interval, assigned_to, category_id, room_id, last_completed_at, created_at, task_categories(name), rooms(name)'
+const TASK_COLUMNS = 'id, title, description, kind, due_date, recurrence_unit, recurrence_interval, assigned_to, category_id, room_id, last_completed_at, completed_at, created_at, task_categories(name), rooms(name)'
 
 interface TaskRow {
   id: string
@@ -48,6 +50,7 @@ interface TaskRow {
   category_id: string | null
   room_id: string | null
   last_completed_at: string | null
+  completed_at: string | null
   created_at: string
   task_categories: { name: string } | null
   rooms: { name: string } | null
@@ -68,9 +71,13 @@ function toItem(row: TaskRow): TaskListItem {
     roomName: row.rooms?.name ?? null,
     assignedTo: row.assigned_to,
     lastCompletedAt: row.last_completed_at,
+    completedAt: row.completed_at,
     createdAt: row.created_at,
   }
 }
+
+/** Most recent completed one-time tasks loaded for the Done tab. */
+const COMPLETED_LIMIT = 200
 
 /** Error code from a failed $fetch to our API (statusMessage carries the stable code, e.g. `stale_due_date`). */
 function apiErrorCode(error: unknown): string | undefined {
@@ -79,7 +86,8 @@ function apiErrorCode(error: unknown): string | undefined {
 }
 
 /**
- * The household's open tasks, sorted (overdue → soonest → undated), with quick add and one-tap completion.
+ * The household's open tasks, sorted (overdue → soonest → undated), with quick add and one-tap completion,
+ * plus the completed one-time tasks for the Done tab (loaded on demand, newest first).
  * Reads and writes go straight to Supabase under RLS; completion goes through POST /api/tasks/:id/complete
  * (next due date in the household timezone). Updates are optimistic and rolled back on failure.
  */
@@ -122,11 +130,50 @@ export function useTasks() {
 
   const tasks = computed(() => sortTasks(data.value.filter(t => !hiddenIds.value.has(t.id))))
 
+  // Done tab: completed one-time tasks, fetched when first shown (TASKS-009).
+  const completed = ref<TaskListItem[]>([])
+  const completedLoaded = ref(false)
+  const completedPending = ref(false)
+  const completedTasks = computed(() =>
+    completed.value
+      .filter(t => !hiddenIds.value.has(t.id))
+      .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? '')),
+  )
+
+  async function loadCompleted() {
+    if (!householdId.value) {
+      return
+    }
+    completedPending.value = true
+    const { data: rows, error: queryError } = await supabase
+      .from('tasks')
+      .select(TASK_COLUMNS)
+      .eq('household_id', householdId.value)
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(COMPLETED_LIMIT)
+    completedPending.value = false
+    if (queryError) {
+      toast.error('Could not load completed tasks.')
+      return
+    }
+    completed.value = rows.map(toItem)
+    completedLoaded.value = true
+  }
+
+  function replaceCompleted(id: string, next: TaskListItem | null) {
+    const rest = completed.value.filter(t => t.id !== id)
+    completed.value = next ? [...rest, next] : rest
+  }
+
   if (import.meta.client) {
     useEventListener(document, 'visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         // The other member may have changed things: refresh when the app comes back to the foreground.
         void refresh()
+        if (completedLoaded.value) {
+          void loadCompleted()
+        }
       } else {
         // Leaving the app ends the undo window: delete now rather than risk the request never being sent.
         flushDeletes()
@@ -159,6 +206,7 @@ export function useTasks() {
       roomName: null,
       assignedTo: null,
       lastCompletedAt: null,
+      completedAt: null,
       createdAt: new Date().toISOString(),
       pending: true,
     }]
@@ -192,10 +240,12 @@ export function useTasks() {
       await refresh()
       return
     }
+    replaceCompleted(before.id, null)
     replace(before.id, {
       ...before,
       dueDate: restored.due_date,
       lastCompletedAt: restored.last_completed_at,
+      completedAt: null,
     })
   }
 
@@ -233,6 +283,12 @@ export function useTasks() {
     }
 
     let message = `Completed “${task.title}”`
+    if (task.kind === 'one_time' && completedLoaded.value) {
+      replaceCompleted(task.id, {
+        ...before,
+        completedAt: result.completedAt,
+      })
+    }
     if (task.kind === 'recurring') {
       replace(task.id, {
         ...before,
@@ -268,8 +324,31 @@ export function useTasks() {
         ? 'That person is no longer in the household.'
         : 'Could not save the task. Please try again.'
     }
-    replace(row.id, toItem(row))
+    const item = toItem(row)
+    if (item.completedAt) {
+      replaceCompleted(item.id, item)
+    } else {
+      replace(item.id, item)
+    }
     return null
+  }
+
+  /** Done tab: un-tick a completed one-time task to reopen it (removes its latest completion). */
+  async function reopen(task: TaskListItem) {
+    const before = { ...task }
+    replaceCompleted(task.id, null)
+    replace(task.id, {
+      ...task,
+      completedAt: null,
+    })
+    const { error: reopenError } = await supabase.rpc('uncomplete_task', { p_task_id: task.id }).single()
+    if (reopenError) {
+      replace(task.id, null)
+      replaceCompleted(task.id, before)
+      toast.error(taskErrorMessage(reopenError.message))
+      return
+    }
+    toast(`Reopened “${task.title}”`)
   }
 
   async function deleteNow(id: string) {
@@ -279,6 +358,7 @@ export function useTasks() {
       toast.error('Could not delete the task.')
     } else {
       replace(id, null)
+      replaceCompleted(id, null)
     }
     const next = new Set(hiddenIds.value)
     next.delete(id)
@@ -324,5 +404,11 @@ export function useTasks() {
     complete,
     saveTask,
     deleteTask,
+    completedTasks,
+    completedLoaded,
+    completedPending,
+    loadCompleted,
+    reopen,
+    timezone,
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeRecurrence, describeSchedule, dueLabel, sortTasks } from './task-list'
+import { describeRecurrence, describeSchedule, doneLabel, dueLabel, sortTasks } from './task-list'
 
 const TODAY = '2026-11-28'
 
@@ -88,5 +88,16 @@ describe('describeSchedule', () => {
     expect(describeSchedule('2026-02-30', 'week', 1, TODAY)).toBeNull()
     expect(describeSchedule('2026-12-01', 'week', 0, TODAY)).toBeNull()
     expect(describeSchedule('2026-12-01', 'week', Number.NaN, TODAY)).toBeNull()
+  })
+})
+
+describe('doneLabel', () => {
+  it('shows the completion day in the household timezone', () => {
+    expect(doneLabel('2026-11-28T08:00:00Z', 'UTC', TODAY)).toBe('Done today')
+    expect(doneLabel('2026-11-27T08:00:00Z', 'UTC', TODAY)).toBe('Done yesterday')
+    expect(doneLabel('2026-11-20T08:00:00Z', 'UTC', TODAY)).toBe('Done Nov 20')
+    expect(doneLabel('2025-12-31T08:00:00Z', 'UTC', TODAY)).toBe('Done Dec 31, 2025')
+    // 23:30 UTC on Nov 27 is already Nov 28 in Jerusalem.
+    expect(doneLabel('2026-11-27T23:30:00Z', 'Asia/Jerusalem', TODAY)).toBe('Done today')
   })
 })
