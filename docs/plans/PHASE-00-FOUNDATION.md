@@ -1,6 +1,6 @@
 # Phase 0: Foundation
 
-Status: Not Started
+Status: In Progress
 
 ## Goal
 A secure, deployed skeleton: authentication, household create/join, private/shared RLS proven on `notes`, responsive navigation with four placeholder routes, tests and CI.
@@ -23,7 +23,7 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-009: Onboarding: create household (name, timezone) / join by invite code or `/join/<code>` link; show/copy/share invite code and link
 - [x] FOUNDATION-010: AppShell: mobile bottom bar (safe-area) + desktop sidebar; `/` → `/tasks`; four placeholder pages
 - [x] FOUNDATION-011: PWA spike: `@vite-pwa/nuxt` with `injectManifest` on Nuxt 4 (manifest, icons, minimal SW); record outcome in 07-DECISIONS.md
-- [ ] FOUNDATION-012: Playwright smoke test (signup → create household → navigate four routes)
+- [x] FOUNDATION-012: Playwright smoke test (signup → create household → navigate four routes)
 - [ ] FOUNDATION-013: GitHub Actions CI (typecheck, lint, vitest with local Supabase, build)
 - [ ] FOUNDATION-015: Auth config: email+password only, **disable "Confirm email"** (no emails sent), set site URL/redirects; decide on disabling public signups after both accounts exist; document manual password reset via dashboard
 - [ ] FOUNDATION-016: Hebrew content support: `dir="auto"` on shared input/text components, Hebrew-capable font fallback, verify Hebrew text entry/display and mixed Hebrew/English in a basic test

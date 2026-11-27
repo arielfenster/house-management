@@ -23,5 +23,7 @@ npm run dev
 ```bash
 npm test             # Vitest; RLS tests run against the local stack (npm run db:start first)
 npm run typecheck    # Nuxt app + tests/scripts (tsconfig.tests.json)
+npm run test:e2e     # Playwright smoke (e2e/): builds + previews the app on :3100, phone and desktop projects
 ```
 RLS tests (`supabase/tests/rls/`) sign in real users and query through the API, so they exercise the same policies as the browser. They create uniquely named users/households and clean up after themselves; keys come from `.env` or `supabase status`.
+E2E tests need the local stack too and a one-time `npx playwright install chromium`; set `E2E_BASE_URL=http://localhost:3000` to run them against `npm run dev` instead of a fresh build. Each test signs up its own user and deletes it afterwards.

@@ -1,5 +1,5 @@
 {
-  // Typechecks code outside the Nuxt projects: DB integration tests, scripts, vitest config.
+  // Typechecks code outside the Nuxt projects: DB integration tests, e2e tests, scripts, vitest/playwright config.
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -14,5 +14,5 @@
     "noUncheckedIndexedAccess": false,
     "isolatedModules": true
   },
-  "include": ["supabase/tests/**/*.ts", "scripts/**/*.ts", "vitest.config.ts", "types/database.types.ts"]
+  "include": ["supabase/tests/**/*.ts", "e2e/**/*.ts", "scripts/**/*.ts", "vitest.config.ts", "playwright.config.ts", "shared/routes.ts", "types/database.types.ts"]
 }
