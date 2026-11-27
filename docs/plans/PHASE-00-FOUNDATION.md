@@ -27,15 +27,15 @@ Deployed Nuxt 4 app; Supabase prod + local; migrations for `profiles`, `househol
 - [x] FOUNDATION-013: GitHub Actions CI (typecheck, lint, vitest with local Supabase, build)
 - [x] FOUNDATION-015: Auth config: email+password only, **disable "Confirm email"** (no emails sent), set site URL/redirects; decide on disabling public signups after both accounts exist; document manual password reset via dashboard — local config in `supabase/config.toml`; prod dashboard settings + reset SQL in 08-DEPLOYMENT.md, applied in FOUNDATION-014 (signups stay open, D11)
 - [x] FOUNDATION-016: Hebrew content support: `dir="auto"` on shared input/text components, Hebrew-capable font fallback, verify Hebrew text entry/display and mixed Hebrew/English in a basic test
-- [ ] FOUNDATION-014: Production: Supabase prod project, Vercel project, env vars, apply migrations, first deploy
+- [x] FOUNDATION-014: Production: Supabase prod project, Vercel project, env vars, apply migrations, first deploy
 
 ## Acceptance Criteria
 - [x] User can sign up, log in with email and password (no emails sent), log out
 - [x] Hebrew text can be entered and displays correctly in user-content fields
 - [ ] Household can be created; another user can join with invite code
-- [ ] Cross-household isolation and private/shared notes rules verified by automated tests
-- [ ] Four routes render; responsive navigation works on phone and desktop widths
-- [ ] Production deployment reachable over HTTPS (free-tier pause/backup behaviour documented, D12)
+- [x] Cross-household isolation and private/shared notes rules verified by automated tests
+- [x] Four routes render; responsive navigation works on phone and desktop widths
+- [x] Production deployment reachable over HTTPS (free-tier pause/backup behaviour documented, D12)
 - [x] CI green
 
 ## Verification
