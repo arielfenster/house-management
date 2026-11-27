@@ -180,7 +180,7 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project. Existing users can still sign in.
-# Open locally (signup page, e2e tests). Production turns this off once both accounts exist (D11).
+# Open, locally and in production (D11): anyone can sign up; only an invite code gets them into a household.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false

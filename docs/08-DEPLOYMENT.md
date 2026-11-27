@@ -13,7 +13,7 @@ Local values live in `supabase/config.toml` `[auth]`. Production is set by hand 
 - **Sign In / Providers:** Email enabled; **"Confirm email" off** (no emails are sent, signup returns a session immediately). All other providers, phone, anonymous sign-ins and MFA off.
 - **Minimum password length:** 6, matching `PASSWORD_MIN_LENGTH` in `shared/validation/auth.ts`.
 - **URL Configuration:** Site URL = the production app URL (`https://<app>`); redirect URLs = the same origin (`https://<app>/**`). No auth flow redirects today (no email links, no OAuth); these matter once magic links/OAuth are added.
-- **"Allow new users to sign up": turn off once both accounts exist.** Email addresses are unverified, so open signups would let anyone with the URL create (empty, household-less) accounts. The signup page then shows "Sign-up is closed". To add someone later, turn it on, let them sign up and join with the invite code, then turn it off again.
+- **"Allow new users to sign up": on, and stays on** (D11). Email addresses are unverified, so anyone with the URL can create an account, but without an invite code it has no household and RLS gives it no data. Accepted trade-off: strangers could create empty accounts that count toward free-tier quotas; if that happens, delete them under Authentication → Users and, if needed, turn this setting off (the signup page then shows "Sign-up is closed").
 
 **Manual password reset** (no reset emails): in the dashboard SQL Editor, run
 ```sql
@@ -35,4 +35,4 @@ then share the new password privately; the user can sign in with it immediately.
 PR → CI (typecheck, lint, DB types check, vitest incl. RLS tests on local Supabase, build, Playwright smoke) → merge to `main` → Vercel production deploy. Migrations: reviewed in PR, applied to prod before/with deploy (backward-compatible changes preferred).
 
 ## Checklist (Phase 0)
-Create Supabase prod project; apply the Auth settings above (signups off after both accounts exist); create Vercel project; set env vars; first deploy of the hello-world authenticated app; confirm HTTPS (required for PWA/push).
+Create Supabase prod project; apply the Auth settings above; create Vercel project; set env vars; first deploy of the hello-world authenticated app; confirm HTTPS (required for PWA/push).
