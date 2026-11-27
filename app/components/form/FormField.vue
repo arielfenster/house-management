@@ -14,7 +14,10 @@ const props = defineProps<{
   /** String, not boolean: an absent boolean prop would be cast to `false` and disable spellcheck. */
   spellcheck?: 'true' | 'false'
   autocapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
-  /** `auto` for fields that may hold Hebrew user content (D17). */
+  /**
+   * Text direction. Defaults to `auto` so user content typed in Hebrew is right-aligned (D17);
+   * pass `ltr` for values that are always Latin (codes, links).
+   */
   dir?: 'auto' | 'ltr' | 'rtl'
 }>()
 
@@ -32,7 +35,7 @@ const inputAttrs = computed<InputHTMLAttributes>(() => ({
   'autofocus': props.autofocus,
   'spellcheck': props.spellcheck,
   'autocapitalize': props.autocapitalize,
-  'dir': props.dir,
+  'dir': props.dir ?? 'auto',
   'aria-invalid': props.error ? true : undefined,
   'aria-describedby': props.error ? `${props.id}-error` : undefined,
 }))

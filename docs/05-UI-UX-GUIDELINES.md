@@ -4,6 +4,7 @@
 
 ## Hebrew content (D17)
 The UI is English/LTR only. User-entered text may be Hebrew: use `dir="auto"` on inputs, textareas and elements rendering user content; use a font stack with Hebrew glyphs; keep list rows tolerant of mixed-direction text (truncate with `text-start`, avoid fixed-direction icon placement inside text).
+Implementation (FOUNDATION-016): `FormField` defaults to `dir="auto"` (pass `dir="ltr"` for always-Latin values such as invite codes/links); new shared text components (textarea, list rows) must do the same. Font: system UI stack in `app/assets/css/tailwind.css` (`--font-sans`, no web font) with Hebrew fallbacks. Hebrew/mixed coverage: `e2e/hebrew.spec.ts`.
 
 ## Layout & navigation
 - Mobile: fixed bottom bar, 4 items (Tasks, Files, Shopping, Notifications), icon + label, clear active state, `padding-bottom: env(safe-area-inset-bottom)`.
@@ -13,7 +14,7 @@ The UI is English/LTR only. User-entered text may be Hebrew: use `dir="auto"` on
 - Page header is small (title + 1–2 actions). No oversized headings.
 
 ## Visual style
-Compact list rows (min 44px touch target), subtle 1px separators instead of cards, one neutral palette + one accent, system/Inter-like font, consistent type scale (sm body, xs meta). Light + dark via Tailwind tokens (shadcn theme variables). Muted style for completed items.
+Compact list rows (min 44px touch target), subtle 1px separators instead of cards, one neutral palette + one accent, system UI font (Hebrew-capable, no web font), consistent type scale (sm body, xs meta). Light + dark via Tailwind tokens (shadcn theme variables). Muted style for completed items.
 
 ## Interaction patterns
 - **Forms:** Drawer (bottom sheet) on mobile, Dialog on desktop — one shared `ResponsiveSheet` component. Autofocus first field; Enter submits.

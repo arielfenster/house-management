@@ -136,7 +136,6 @@ async function submitJoin() {
 					v-model="createForm.name"
 					label="Household name"
 					placeholder="e.g. Our home"
-					dir="auto"
 					:maxlength="HOUSEHOLD_NAME_MAX_LENGTH"
 					autofocus
 					:error="errors.name"

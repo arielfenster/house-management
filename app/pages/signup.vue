@@ -50,7 +50,6 @@ async function submit() {
         v-model="form.displayName"
         label="Your name"
         autocomplete="name"
-        dir="auto"
         :maxlength="DISPLAY_NAME_MAX_LENGTH"
         autofocus
         :error="errors.displayName"
