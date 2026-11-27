@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeRecurrence, dueLabel, sortTasks } from './task-list'
+import { describeRecurrence, describeSchedule, dueLabel, sortTasks } from './task-list'
 
 const TODAY = '2026-11-28'
 
@@ -69,5 +69,24 @@ describe('sortTasks', () => {
     const sorted = sortTasks(input)
     expect(sorted.map(t => `${t.title}${t.createdAt.slice(9, 10)}`)).toEqual(['a1', 'b1', 'b2', 'c1', 'z1'])
     expect(input[0]?.title).toBe('b')
+  })
+})
+
+describe('describeSchedule', () => {
+  it.each([
+    ['2026-11-28', 'week', 1, 'Due today, then every week after each completion.'],
+    ['2026-11-29', 'week', 2, 'Due tomorrow, then every 2 weeks after each completion.'],
+    ['2026-12-06', 'month', 3, 'Due Sun, Dec 6, then every 3 months after each completion.'],
+    ['2027-10-15', 'year', 1, 'Due Fri, Oct 15, 2027, then every year after each completion.'],
+    ['2026-11-20', 'day', 1, 'Overdue since Fri, Nov 20, then every day after each completion.'],
+  ] as const)('%s, %s ×%i', (due, unit, interval, text) => {
+    expect(describeSchedule(due, unit, interval, TODAY)).toBe(text)
+  })
+
+  it('is null until the values are valid', () => {
+    expect(describeSchedule('', 'week', 1, TODAY)).toBeNull()
+    expect(describeSchedule('2026-02-30', 'week', 1, TODAY)).toBeNull()
+    expect(describeSchedule('2026-12-01', 'week', 0, TODAY)).toBeNull()
+    expect(describeSchedule('2026-12-01', 'week', Number.NaN, TODAY)).toBeNull()
   })
 })

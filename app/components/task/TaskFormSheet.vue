@@ -4,6 +4,7 @@ import { Trash2Icon } from '@lucide/vue'
 import type { HouseholdMember } from '~/composables/use-household-members'
 import type { TaskListItem } from '~/composables/use-tasks'
 import { RECURRENCE_INTERVAL_MAX, RECURRENCE_INTERVAL_MIN, RECURRENCE_UNITS, addDays, type RecurrenceUnit } from '#shared/recurrence'
+import { describeSchedule } from '#shared/task-list'
 import { fieldErrors } from '#shared/validation/auth'
 import {
   TASK_DESCRIPTION_MAX_LENGTH,
@@ -62,6 +63,20 @@ watch(open, (isOpen) => {
 
 const isEdit = computed(() => props.task !== null)
 const recurring = computed(() => form.kind === 'recurring')
+
+// A repeating task's date is only its next occurrence; completions then schedule the following ones (D10).
+// "First due" while setting one up, "Next due" once it already repeats.
+const dueLabelText = computed(() => {
+  if (!recurring.value) {
+    return 'Due date (optional)'
+  }
+  return props.task?.kind === 'recurring' ? 'Next due' : 'First due'
+})
+const scheduleSummary = computed(() =>
+  recurring.value
+    ? describeSchedule(form.dueDate, form.recurrenceUnit, Number(form.recurrenceInterval), props.today)
+    : null,
+)
 
 function setKind(kind: TaskFormValues['kind']) {
   form.kind = kind
@@ -185,16 +200,13 @@ function remove() {
         <p v-if="errors.recurrenceInterval" id="task-interval-error" class="text-xs text-destructive">
           {{ errors.recurrenceInterval }}
         </p>
-        <p class="text-xs text-muted-foreground">
-          The next due date is counted from the day it is done.
-        </p>
       </fieldset>
 
       <div class="space-y-1.5">
         <FormField
           id="task-due"
           v-model="form.dueDate"
-          :label="recurring ? 'Next due' : 'Due date (optional)'"
+          :label="dueLabelText"
           type="date"
           dir="ltr"
           :error="errors.dueDate"
@@ -214,6 +226,9 @@ function remove() {
             No date
           </Button>
         </div>
+        <p v-if="scheduleSummary" class="pt-0.5 text-xs text-muted-foreground" aria-live="polite">
+          {{ scheduleSummary }}
+        </p>
       </div>
 
       <FormSelect id="task-assignee" v-model="form.assignedTo" label="Assigned to" :options="assigneeOptions" :error="errors.assignedTo" />

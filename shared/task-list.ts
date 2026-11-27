@@ -2,7 +2,7 @@
  * Pure helpers for the task list (features/TASKS.md §6): due labels, default sort, recurrence text.
  * Dates are household-local `YYYY-MM-DD` strings; `today` comes from `localToday(household.timezone)`.
  */
-import { daysBetween, type RecurrenceUnit } from './recurrence'
+import { daysBetween, isValidIsoDate, type RecurrenceUnit } from './recurrence'
 
 export type DueTone = 'overdue' | 'today' | 'soon' | 'later'
 
@@ -116,4 +116,39 @@ export function sortTasks<T extends SortableTask>(tasks: readonly T[]): T[] {
     }
     return a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0
   })
+}
+
+/** "every week", "every 2 weeks" (lower case, for use inside a sentence). */
+function everyPhrase(unit: RecurrenceUnit, interval: number): string {
+  return interval === 1 ? `every ${unit}` : `every ${plural(interval, unit)}`
+}
+
+/**
+ * One-sentence preview of a repeating task's schedule for the form (D10): the chosen date is just the next
+ * occurrence; after that, each completion schedules the next one an interval later.
+ * "Due tomorrow, then every week after each completion." / "Due Sun, Dec 6, then every 3 months after each completion."
+ * Null when the values are not valid yet (the form shows field errors instead).
+ */
+export function describeSchedule(dueDate: string, unit: RecurrenceUnit, interval: number, today: string): string | null {
+  if (!isValidIsoDate(dueDate) || !Number.isInteger(interval) || interval < 1) {
+    return null
+  }
+  const days = daysBetween(today, dueDate)
+  let when: string
+  if (days === 0) {
+    when = 'Due today'
+  } else if (days === 1) {
+    when = 'Due tomorrow'
+  } else {
+    const [y, m, d] = dueDate.split('-').map(Number)
+    const sameYear = dueDate.slice(0, 4) === today.slice(0, 4)
+    when = `${days < 0 ? 'Overdue since' : 'Due'} ${new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: sameYear ? undefined : 'numeric',
+    }).format(new Date(Date.UTC(y!, m! - 1, d!)))}`
+  }
+  return `${when}, then ${everyPhrase(unit, interval)} after each completion.`
 }
