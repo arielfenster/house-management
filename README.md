@@ -20,7 +20,13 @@ npm run dev
 ```
 
 ### Demo data
-`npm run db:seed-demo` creates a local demo account (`demo@house.test`, password in `scripts/seed-demo.ts`; local stack only) with a household and realistic tasks. Re-running resets it.
+`npm run db:seed-demo` fills the **local** stack (it refuses any other database) with a demo household, "Our home", for looking at the UI. Re-running resets it.
+- Two members who can both log in: Dana `demo@house.test` and Noa `demo2@house.test`, password `demo-password-local`.
+- About 40 open tasks: overdue, today, this week, months ahead and undated; one-time and repeating (daily to yearly); assigned to Dana, Noa or nobody; some with notes, long titles or Hebrew titles.
+- Extra categories (Garden, Pets, Shopping) and rooms (Laundry, Garage, Kids' room) next to the defaults.
+- Completed one-time tasks for the Done tab, and completion history (on time, late, early, by both members) on several repeating tasks.
+
+Edit the `TASKS` list in `scripts/seed-demo.ts` to change what it creates.
 
 ### Tests
 ```bash
