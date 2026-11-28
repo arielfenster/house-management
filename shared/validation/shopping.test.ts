@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { checkSectionName } from './shopping'
+import * as v from 'valibot'
+import { checkSectionName, shoppingItemNameSchema } from './shopping'
 
 const sections = [
   { id: '1', name: 'Produce' },
@@ -25,5 +26,19 @@ describe('checkSectionName', () => {
   it('allows keeping or re-casing the name of the section being renamed', () => {
     expect(checkSectionName('PRODUCE', sections, '1')).toEqual({ ok: true, name: 'PRODUCE' })
     expect(checkSectionName('Produce', sections, '2').ok).toBe(false)
+  })
+})
+
+describe('shoppingItemNameSchema', () => {
+  const parse = (input: string) => v.safeParse(shoppingItemNameSchema, input)
+
+  it('cleans the name like typed entry', () => {
+    expect(parse('  - olive   oil ').output).toBe('olive oil')
+    expect(parse('קוטג\' 5%').output).toBe('קוטג\' 5%')
+  })
+
+  it('rejects names that are empty after cleaning', () => {
+    expect(parse('   ').success).toBe(false)
+    expect(parse('- ').success).toBe(false)
   })
 })

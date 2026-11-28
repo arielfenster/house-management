@@ -5,7 +5,7 @@ import { useLocalStorage, usePreferredReducedMotion } from '@vueuse/core'
 // Shopping (features/SHOPPING.md): the household's list — items without a section on top, then each section
 // under a small heading; one tap ticks an item off — it leaves the list and is deleted, with Undo (D22); fast entry bar kept in view at the top
 // (SHOP-005); sections created, renamed and deleted (with undo) inline (SHOP-006).
-// Item editing and reordering come in SHOP-007/008, realtime in SHOP-009.
+// Items are renamed or deleted from their pencil (SHOP-007). Reordering comes in SHOP-008, realtime in SHOP-009.
 const {
   groups,
   sections,
@@ -19,6 +19,8 @@ const {
   error,
   refresh,
   completeItem,
+  deleteItem,
+  renameItem,
 } = useShopping()
 
 // Section new items go to ('' = none), remembered on this device. Read after mount so the server-rendered select
@@ -104,7 +106,9 @@ const loading = computed(() => pending.value && isEmpty.value)
               v-for="item in group.items"
               :key="item.id"
               :item="item"
+              :rename="renameItem"
               @done="completeItem(item)"
+              @delete="deleteItem(item)"
             />
           </TransitionGroup>
           <p v-if="!group.items.length" class="px-3 py-2.5 text-xs text-muted-foreground">

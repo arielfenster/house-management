@@ -212,6 +212,15 @@ export function useShopping() {
    * use on the list, and the other member sees it gone at once. One toast, updated per tick, undoes the latest.
    */
   function completeItem(item: ShoppingItem) {
+    removeWithUndo(item, `✓ ${item.name}`)
+  }
+
+  /** Deleting from the item editor (SHOP-007): same as ticking, with its own wording. */
+  function deleteItem(item: ShoppingItem) {
+    removeWithUndo(item, `Deleted “${item.name}”`)
+  }
+
+  function removeWithUndo(item: ShoppingItem, message: string) {
     if (item.pending) {
       return
     }
@@ -220,7 +229,7 @@ export function useShopping() {
       item,
       deleted: deleteItemRow(item),
     }
-    toast(`✓ ${item.name}`, {
+    toast(message, {
       id: DONE_TOAST_ID,
       duration: DONE_TOAST_MS,
       action: {
@@ -230,6 +239,36 @@ export function useShopping() {
         },
       },
     })
+  }
+
+  /**
+   * Renames an item at once (name already validated); rolls back with a toast if saving fails. If the other member
+   * ticked it off meanwhile, the update matches nothing and the item leaves the list here too.
+   */
+  async function renameItem(item: ShoppingItem, name: string): Promise<boolean> {
+    if (name === item.name || item.pending) {
+      return true
+    }
+    restoreLocal({
+      ...item,
+      name,
+    })
+    const { data: updated, error: updateError } = await supabase
+      .from('shopping_items')
+      .update({ name })
+      .eq('id', item.id)
+      .select('id')
+    if (updateError) {
+      restoreLocal(item)
+      toast.error('Could not rename the item. Please try again.')
+      return false
+    }
+    if (updated.length === 0) {
+      removeLocal(item.id)
+      toast(`“${item.name}” was already removed from the list.`)
+      return false
+    }
+    return true
   }
 
   /**
@@ -437,5 +476,7 @@ export function useShopping() {
     error,
     refresh,
     completeItem,
+    deleteItem,
+    renameItem,
   }
 }

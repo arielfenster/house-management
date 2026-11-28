@@ -18,7 +18,7 @@ Shopping tables + RLS, realtime sync, `/shopping` UI.
 - [x] SHOP-004: Page with sections/items rendering, check/uncheck (optimistic)
 - [x] SHOP-005: Fast-entry input (Enter adds, stays focused, target section, multi-line paste)
 - [x] SHOP-006: Section create/rename/delete (undo)
-- [ ] SHOP-007: Inline edit/delete items ("clear completed" dropped: ticking deletes, D22)
+- [x] SHOP-007: Inline edit/delete items ("clear completed" dropped: ticking deletes, D22)
 - [ ] SHOP-008: Reorder items/sections and move between sections
 - [ ] SHOP-009: Realtime subscription + refetch-on-focus; reconcile own echoes
 - [ ] SHOP-010: Playwright (rapid entry, two-context sync) + mobile check

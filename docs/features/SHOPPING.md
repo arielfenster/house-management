@@ -23,8 +23,10 @@ Sections (SHOP-006): "New section" below the list opens an inline input; the new
 
 Ticking (D22): the check shows for ~300 ms, then the row collapses out and the item is deleted at once (so the other member sees it gone). One toast, "✓ Milk · Undo", is reused by every tick (5 s); Undo re-inserts the latest ticked item with its id, section and position (top area if its section is gone). A failed delete brings the row back with an error toast. There is no checked state and no "Clear completed"; the `checked` column is unused.
 
+Editing items (SHOP-007): the row is one large tick target, so tapping the text does not edit; instead a light pencil at the end of each row turns it into an inline editor (Enter saves, Esc cancels, delete button). Names are cleaned like typed entry (`shoppingItemNameSchema`). Delete works like ticking (immediate delete, the same reused Undo toast, "Deleted “Milk”"). Renaming an item the other member already ticked off removes it here with a short notice.
+
 ## 6. UI behavior
-Section = small bold/uppercase heading with subtle separator; items = plain rows with checkbox; ticking shows check + strikethrough briefly, then the row leaves; no cards. Tap target ≥ 44px. Inline edit by tapping text.
+Section = small bold/uppercase heading with subtle separator; items = plain rows with checkbox; ticking shows check + strikethrough briefly, then the row leaves; no cards. Tap target ≥ 44px. Inline edit from the row's pencil (tapping the text ticks the item).
 
 ## 7. Data requirements
 `shopping_lists`, `shopping_sections`, `shopping_items` (fractional `position`) (03).

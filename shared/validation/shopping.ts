@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { SHOPPING_SECTION_NAME_MAX } from '../shopping-paste'
+import { SHOPPING_ITEM_NAME_MAX, SHOPPING_SECTION_NAME_MAX, cleanItemName } from '../shopping-paste'
 
 // Section names: 1–50 characters (shopping_sections check, supabase/migrations/*_shopping.sql).
 export const shoppingSectionNameSchema = v.pipe(
@@ -38,3 +38,12 @@ export function checkSectionName(
     name: parsed.output,
   }
 }
+
+// Item names: 1–200 characters (shopping_items check). Editing cleans the name like typing does (whitespace
+// collapsed, list markers dropped); duplicates are fine.
+export const shoppingItemNameSchema = v.pipe(
+  v.string(),
+  v.transform(cleanItemName),
+  v.nonEmpty('Enter a name.'),
+  v.maxLength(SHOPPING_ITEM_NAME_MAX, `Use at most ${SHOPPING_ITEM_NAME_MAX} characters.`),
+)
