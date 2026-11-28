@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ChevronDownIcon, PlusIcon } from '@lucide/vue'
-import { useLocalStorage } from '@vueuse/core'
 import type { ShoppingSection } from '~/composables/use-shopping'
 import { SHOPPING_ITEM_NAME_MAX, isMultiItemPaste, parseItemLines } from '#shared/shopping-paste'
 
 // Fast entry (features/SHOPPING.md §5): type, Enter, type, Enter — the input keeps focus. Items go to the chosen
-// section (a chip; remembered on this device). Pasting several lines adds one item per non-empty line.
+// section (a chip; the page remembers it on this device). Pasting several lines adds one item per non-empty line.
 // On failure the text comes back (single item) or the error toast offers Retry (several, see useShopping).
 const props = defineProps<{
   sections: ShoppingSection[]
@@ -15,10 +14,11 @@ const props = defineProps<{
 /** Value of the "no section" option (a select value cannot be null). */
 const TOP = ''
 
+/** Chosen section id ('' = no section); owned by the page (a new section becomes the target). */
+const storedTarget = defineModel<string>('target', { required: true })
+
 const text = ref('')
 const input = useTemplateRef<{ $el: HTMLInputElement } | HTMLInputElement>('input')
-// Read after mount so the server-rendered select (always "No section") hydrates without a mismatch.
-const storedTarget = useLocalStorage<string>('shopping-target-section', TOP, { initOnMounted: true })
 
 // A remembered section that was deleted (or belongs to another household) falls back to the top area.
 const target = computed({

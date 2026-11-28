@@ -1,3 +1,4 @@
+import { useEventListener } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import { positionAtEnd, sortByPosition } from '#shared/shopping-position'
 
@@ -5,6 +6,8 @@ export interface ShoppingSection {
   id: string
   name: string
   position: number
+  /** Optimistic row whose insert has not finished yet. */
+  pending?: boolean
 }
 
 export interface ShoppingItem {
@@ -23,6 +26,8 @@ export interface ShoppingGroup {
   section: ShoppingSection | null
   items: ShoppingItem[]
 }
+
+const UNDO_TOAST_MS = 8000
 
 interface ShoppingData {
   listId: string | null
@@ -100,12 +105,24 @@ export function useShopping() {
   // they carry their final id (generated here), so once the fetch has them the copy here is ignored.
   const pendingAdds = ref<ShoppingItem[]>([])
 
+  // Same for sections being created.
+  const pendingSections = ref<ShoppingSection[]>([])
+
+  // Deleted sections stay hidden (with their items) during the undo window; the delete runs when it ends.
+  const hiddenSectionIds = ref(new Set<string>())
+  const pendingDeletes = new Map<string, ReturnType<typeof setTimeout>>()
+
   const items = computed((): ShoppingItem[] => {
     const saved = new Set(data.value.items.map(i => i.id))
     return [...data.value.items, ...pendingAdds.value.filter(i => !saved.has(i.id))]
+      .filter(i => i.sectionId === null || !hiddenSectionIds.value.has(i.sectionId))
   })
 
-  const sections = computed(() => sortByPosition(data.value.sections))
+  const sections = computed(() => {
+    const saved = new Set(data.value.sections.map(s => s.id))
+    return sortByPosition([...data.value.sections, ...pendingSections.value.filter(s => !saved.has(s.id))])
+      .filter(s => !hiddenSectionIds.value.has(s.id))
+  })
 
   const groups = computed((): ShoppingGroup[] => {
     const bySection = new Map<string | null, ShoppingItem[]>()
@@ -124,7 +141,7 @@ export function useShopping() {
     return [top, ...rest]
   })
 
-  const isEmpty = computed(() => items.value.length === 0 && data.value.sections.length === 0)
+  const isEmpty = computed(() => items.value.length === 0 && sections.value.length === 0)
   const remaining = computed(() => items.value.filter(i => !i.checked).length)
 
   function patchItem(id: string, fields: Partial<ShoppingItem>) {
@@ -224,10 +241,140 @@ export function useShopping() {
     return true
   }
 
+  /** Adds a section at the end (name already validated). Returns its id, or null if saving failed. */
+  async function createSection(name: string): Promise<string | null> {
+    const listId = data.value.listId
+    if (!listId || !householdId.value) {
+      return null
+    }
+    const section: ShoppingSection = {
+      id: crypto.randomUUID(),
+      name,
+      position: positionAtEnd([...data.value.sections, ...pendingSections.value]),
+      pending: true,
+    }
+    pendingSections.value = [...pendingSections.value, section]
+    const { error: insertError } = await supabase.from('shopping_sections').insert({
+      id: section.id,
+      list_id: listId,
+      household_id: householdId.value,
+      name: section.name,
+      position: section.position,
+    })
+    pendingSections.value = pendingSections.value.filter(s => s.id !== section.id)
+    if (insertError) {
+      toast.error(`Could not add the “${name}” section. Please try again.`)
+      return null
+    }
+    if (!data.value.sections.some(s => s.id === section.id)) {
+      const { pending: _pending, ...saved } = section
+      data.value = {
+        ...data.value,
+        sections: [...data.value.sections, saved],
+      }
+    }
+    return section.id
+  }
+
+  function patchSection(id: string, fields: Partial<ShoppingSection>) {
+    data.value = {
+      ...data.value,
+      sections: data.value.sections.map((section) => {
+        if (section.id !== id) {
+          return section
+        }
+        return {
+          ...section,
+          ...fields,
+        }
+      }),
+    }
+  }
+
+  /** Renames a section at once (name already validated); rolls back with a toast if saving fails. */
+  async function renameSection(section: ShoppingSection, name: string): Promise<boolean> {
+    if (name === section.name) {
+      return true
+    }
+    patchSection(section.id, { name })
+    const { error: updateError } = await supabase.from('shopping_sections').update({ name }).eq('id', section.id)
+    if (updateError) {
+      patchSection(section.id, { name: section.name })
+      toast.error('Could not rename the section. Please try again.')
+      return false
+    }
+    return true
+  }
+
+  function unhideSection(id: string) {
+    const next = new Set(hiddenSectionIds.value)
+    next.delete(id)
+    hiddenSectionIds.value = next
+  }
+
+  async function deleteSectionNow(id: string) {
+    pendingDeletes.delete(id)
+    // Its items go with it (on delete cascade, D16).
+    const { error: deleteError } = await supabase.from('shopping_sections').delete().eq('id', id)
+    if (deleteError) {
+      toast.error('Could not delete the section.')
+    } else {
+      data.value = {
+        ...data.value,
+        sections: data.value.sections.filter(s => s.id !== id),
+        items: data.value.items.filter(i => i.sectionId !== id),
+      }
+    }
+    unhideSection(id)
+  }
+
+  function flushDeletes() {
+    for (const [id, timer] of pendingDeletes) {
+      clearTimeout(timer)
+      void deleteSectionNow(id)
+    }
+  }
+
+  /**
+   * Delete with undo (features/SHOPPING.md §10, D16): the section and its items disappear at once; the delete runs
+   * when the undo window ends, so Undo loses nothing.
+   */
+  function deleteSection(section: ShoppingSection) {
+    const count = items.value.filter(i => i.sectionId === section.id).length
+    hiddenSectionIds.value = new Set([...hiddenSectionIds.value, section.id])
+    pendingDeletes.set(section.id, setTimeout(() => void deleteSectionNow(section.id), UNDO_TOAST_MS))
+    const what = count === 0 ? '' : count === 1 ? ' and 1 item' : ` and ${count} items`
+    toast(`Deleted “${section.name}”${what}`, {
+      duration: UNDO_TOAST_MS,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          clearTimeout(pendingDeletes.get(section.id))
+          pendingDeletes.delete(section.id)
+          unhideSection(section.id)
+        },
+      },
+    })
+  }
+
+  if (import.meta.client) {
+    // Leaving the app ends the undo window: delete now rather than risk the request never being sent.
+    useEventListener(document, 'visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushDeletes()
+      }
+    })
+    // Leaving the page (in-app navigation) also ends it.
+    onBeforeUnmount(flushDeletes)
+  }
+
   return {
     groups,
     sections,
     addItems,
+    createSection,
+    renameSection,
+    deleteSection,
     isEmpty,
     remaining,
     pending,
