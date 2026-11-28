@@ -131,6 +131,15 @@ const loading = initialLoading
       Drag the handles to reorder items and sections, or to move an item to another section.
     </p>
 
+    <!-- At the top, above the list. New sections become the add target, so the next items typed go straight in. -->
+    <ShoppingNewSection
+      v-if="!loading && !error && !arranging"
+      class="-mt-1 mb-2"
+      :sections="sections"
+      :create="createSection"
+      @created="addTarget = $event"
+    />
+
     <div v-if="loading" class="rounded-lg border border-foreground/20 bg-card shadow-xs" aria-busy="true" aria-label="Loading the shopping list">
       <div v-for="i in 6" :key="i" class="flex h-11 items-center gap-3 border-b border-foreground/10 px-3 last:border-b-0">
         <div class="size-5 rounded-[5px] bg-muted" />
@@ -233,14 +242,5 @@ const loading = initialLoading
         </section>
       </div>
     </div>
-
-    <!-- New sections become the add target, so the next items typed go straight into them. -->
-    <ShoppingNewSection
-      v-if="!loading && !error && !arranging"
-      class="mt-2"
-      :sections="sections"
-      :create="createSection"
-      @created="addTarget = $event"
-    />
   </div>
 </template>
