@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ListChecksIcon, SearchIcon, SlidersHorizontalIcon } from '@lucide/vue'
+import { ListChecksIcon, PlusIcon } from '@lucide/vue'
 import type { TaskListItem } from '~/composables/use-tasks'
-import { activeFacetCount, countByStatus, filterTasks, matchesFacets } from '#shared/task-filter'
+import { countByStatus, filterTasks, matchesFacets } from '#shared/task-filter'
 import { doneLabel } from '#shared/task-list'
 
-// Tasks: quick add, status tabs + search + filters (TASKS-009), open tasks sorted overdue → soonest → undated,
-// one-tap completion with undo (TASKS-006), create/edit/delete sheet (TASKS-007/008). History: TASKS-010.
+// Tasks: "New task" (full form) in the header, quick add, search + Filters sheet + status tabs (TASKS-009),
+// open tasks sorted overdue → soonest → undated, one-tap completion with undo (TASKS-006),
+// create/edit/delete sheet (TASKS-007/008) with history (TASKS-010).
 const {
   tasks,
   today,
@@ -26,13 +27,16 @@ const {
 const { data: members } = useHouseholdMembers()
 const { values: categories } = useTaskList('task_categories')
 const { values: rooms } = useTaskList('rooms')
-const { status, facets, searchOpen, filtersOpen, clearAll } = useTaskFilters()
+const { status, facets, filtersOpen, clearFacets, clearAll } = useTaskFilters()
+const { sections: filterSections, activeFilters, setFilter } = useTaskFilterSections(rooms, categories, members)
+
+/** Quick add text; "New task" carries it into the full form. */
+const quickTitle = ref('')
 
 const memberNames = computed(() => new Map(members.value.map(m => [m.id, m.displayName])))
 
 const counts = computed(() => countByStatus(tasks.value, facets.value, today.value))
-const facetCount = computed(() => activeFacetCount(facets.value))
-const narrowed = computed(() => facetCount.value > 0 || facets.value.query.trim() !== '')
+const narrowed = computed(() => activeFilters.value.length > 0 || facets.value.query.trim() !== '')
 
 const showingCompleted = computed(() => status.value === 'completed')
 const visibleTasks = computed(() => {
@@ -86,9 +90,10 @@ const sheetOpen = ref(false)
 const editing = ref<TaskListItem | null>(null)
 const initialTitle = ref('')
 
-function openNew(title: string) {
+function openNew() {
   editing.value = null
-  initialTitle.value = title
+  initialTitle.value = quickTitle.value.trim()
+  quickTitle.value = ''
   sheetOpen.value = true
 }
 
@@ -110,40 +115,22 @@ async function onListsChanged() {
   <div>
     <PageHeader title="Tasks">
       <template #actions>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Search"
-          title="Search"
-          :aria-pressed="searchOpen"
-          :class="{ 'bg-muted': searchOpen }"
-          @click="searchOpen = !searchOpen"
-        >
-          <SearchIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="relative"
-          :aria-label="facetCount ? `Filters (${facetCount} active)` : 'Filters'"
-          title="Filters"
-          :aria-pressed="filtersOpen"
-          :class="{ 'bg-muted': filtersOpen }"
-          @click="filtersOpen = !filtersOpen"
-        >
-          <SlidersHorizontalIcon />
-          <span
-            v-if="facetCount"
-            class="absolute -end-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
-            aria-hidden="true"
-          >{{ facetCount }}</span>
+        <Button size="sm" @click="openNew">
+          <PlusIcon />
+          New task
         </Button>
       </template>
     </PageHeader>
 
-    <TaskQuickAdd :add="quickAdd" class="mb-3" @more="openNew" />
+    <TaskQuickAdd v-model="quickTitle" :add="quickAdd" class="mb-3" />
 
-    <TaskFilterBar :counts="counts" :categories="categories" :rooms="rooms" :members="members" class="mb-3" />
+    <TaskToolbar
+      :counts="counts"
+      :active-filters="activeFilters"
+      class="mb-3"
+      @remove-filter="setFilter($event, null)"
+      @clear-filters="clearFacets"
+    />
 
     <div v-if="loading" class="rounded-lg border border-foreground/20 bg-card shadow-xs" aria-busy="true" aria-label="Loading tasks">
       <div v-for="i in 5" :key="i" class="flex h-14 items-center gap-3 border-b border-foreground/10 px-4 last:border-b-0">
@@ -194,6 +181,14 @@ async function onListsChanged() {
       :save="saveTask"
       @delete="deleteTask"
       @lists-changed="onListsChanged"
+    />
+
+    <TaskFiltersSheet
+      v-model:open="filtersOpen"
+      :sections="filterSections"
+      :result-count="visibleTasks.length"
+      @set="setFilter"
+      @clear="clearFacets"
     />
   </div>
 </template>

@@ -14,7 +14,7 @@ test('quick add, complete and undo a task', async ({ page }, testInfo) => {
     await expect(page.getByText('No tasks yet')).toBeVisible()
 
     // Quick add: Enter creates the task; the field is cleared for the next one.
-    const quickAdd = page.getByLabel('New task')
+    const quickAdd = page.getByLabel('Quick add a task')
     await quickAdd.fill('Water plants')
     await quickAdd.press('Enter')
     await expect(quickAdd).toHaveValue('')
@@ -47,9 +47,9 @@ test('create, edit and delete a task with the form', async ({ page }, testInfo) 
   try {
     await signUpWithHousehold(page, user)
 
-    // "Add with details" carries over what was typed.
-    await page.getByLabel('New task').fill('Clean AC filters')
-    await page.getByRole('button', { name: 'Add with details' }).click()
+    // "New task" (header) opens the full form and carries over what was typed in quick add.
+    await page.getByLabel('Quick add a task').fill('Clean AC filters')
+    await page.getByRole('button', { name: 'New task' }).click()
     const sheet = page.getByRole('dialog', { name: 'New task' })
     await expect(sheet.getByLabel('Title')).toHaveValue('Clean AC filters')
 

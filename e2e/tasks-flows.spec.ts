@@ -15,8 +15,8 @@ function row(page: Page, title: string) {
 }
 
 async function openNewTaskForm(page: Page, title: string) {
-  await page.getByLabel('New task').fill(title)
-  await page.getByRole('button', { name: 'Add with details' }).click()
+  await page.getByLabel('Quick add a task').fill(title)
+  await page.getByRole('button', { name: 'New task' }).click()
   return page.getByRole('dialog', { name: 'New task' })
 }
 
@@ -73,31 +73,39 @@ test('custom category and room inline, then filter, search and rename', async ({
     await expect(row(page, 'Prune the lemon tree')).toContainText('Room:Yard')
 
     // A second task in another (default) category.
-    await page.getByLabel('New task').fill('Descale the kettle')
-    await page.getByLabel('New task').press('Enter')
+    await page.getByLabel('Quick add a task').fill('Descale the kettle')
+    await page.getByLabel('Quick add a task').press('Enter')
     await expect(row(page, 'Descale the kettle')).toBeVisible()
 
-    // Filter by the new category.
+    // Filters sheet: pick the new category; the sheet shows how many tasks match.
     await page.getByRole('button', { name: 'Filters', exact: true }).click()
-    await page.getByRole('combobox', { name: 'Category' }).selectOption({ label: 'Garden' })
+    const filters = page.getByRole('dialog', { name: 'Filters' })
+    await filters.getByRole('group', { name: 'Category' }).getByRole('button', { name: 'Garden' }).click()
+    await expect(filters.getByRole('button', { name: 'Show 1 task' })).toBeVisible()
+    await filters.getByRole('button', { name: 'Show 1 task' }).click()
+    await expect(filters).toBeHidden()
     await expect(taskList(page).getByRole('listitem')).toHaveCount(1)
     await expect(row(page, 'Prune the lemon tree')).toBeVisible()
-    await page.getByRole('button', { name: 'Clear filters' }).click()
+    // Active filter chip; removing it shows everything again.
+    await page.getByRole('button', { name: 'Remove filter Category: Garden' }).click()
     await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
 
     // Assignee: nothing is assigned to me yet; both tasks are unassigned.
-    await page.getByRole('combobox', { name: 'Assigned to' }).selectOption({ label: user.displayName })
-    await expect(page.getByText('No matching tasks')).toBeVisible()
-    await page.getByRole('combobox', { name: 'Assigned to' }).selectOption({ label: 'Unassigned' })
-    await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
-    await page.getByRole('button', { name: 'Clear filters' }).click()
+    await page.getByRole('button', { name: 'Filters', exact: true }).click()
+    await filters.getByRole('group', { name: 'Assigned to' }).getByRole('button', { name: user.displayName }).click()
+    await expect(filters.getByRole('button', { name: 'Show 0 tasks' })).toBeVisible()
+    await filters.getByRole('group', { name: 'Assigned to' }).getByRole('button', { name: 'Unassigned' }).click()
+    await expect(filters.getByRole('button', { name: 'Show 2 tasks' })).toBeVisible()
+    await filters.getByRole('button', { name: 'Clear all' }).click()
+    await page.keyboard.press('Escape')
+    await expect(filters).toBeHidden()
 
-    // Search.
-    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    // Search (always visible above the list).
     await page.getByRole('searchbox', { name: 'Search tasks' }).fill('kettle')
     await expect(taskList(page).getByRole('listitem')).toHaveCount(1)
     await expect(row(page, 'Descale the kettle')).toBeVisible()
-    await page.getByRole('button', { name: 'Close search' }).click()
+    await page.getByRole('button', { name: 'Clear search' }).click()
+    await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
 
     // Rename the category from the form: the row follows.
     await row(page, 'Prune the lemon tree').getByRole('button', { name: /Prune the lemon tree/ }).click()
@@ -120,8 +128,8 @@ test('Done tab: completed one-time tasks can be reopened', async ({ page }, test
   const user = newUser(`done-${testInfo.project.name}`)
   try {
     await signUpWithHousehold(page, user)
-    await page.getByLabel('New task').fill('Fix bathroom faucet')
-    await page.getByLabel('New task').press('Enter')
+    await page.getByLabel('Quick add a task').fill('Fix bathroom faucet')
+    await page.getByLabel('Quick add a task').press('Enter')
     await expect(row(page, 'Fix bathroom faucet')).toBeVisible()
 
     await page.getByRole('checkbox', { name: 'Complete Fix bathroom faucet' }).click()
@@ -148,8 +156,8 @@ test('phone layout: no sideways scrolling, 44px touch targets, nav visible', asy
     await signUpWithHousehold(page, user)
     // A long title and Hebrew must truncate, not widen the page.
     for (const title of ['Call the plumber about the boiler pressure valve and the leaking expansion tank', 'לקנות מנורה חדשה לסלון ולחדר השינה']) {
-      await page.getByLabel('New task').fill(title)
-      await page.getByLabel('New task').press('Enter')
+      await page.getByLabel('Quick add a task').fill(title)
+      await page.getByLabel('Quick add a task').press('Enter')
     }
     await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
 
