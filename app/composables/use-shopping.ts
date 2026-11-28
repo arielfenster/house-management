@@ -1,5 +1,5 @@
 import { toast } from 'vue-sonner'
-import { sortByPosition } from '#shared/shopping-position'
+import { positionAtEnd, sortByPosition } from '#shared/shopping-position'
 
 export interface ShoppingSection {
   id: string
@@ -14,6 +14,8 @@ export interface ShoppingItem {
   name: string
   checked: boolean
   position: number
+  /** Optimistic row whose insert has not finished yet. */
+  pending?: boolean
 }
 
 /** Items of one section (or of the top area, `section` null), in display order. */
@@ -94,9 +96,20 @@ export function useShopping() {
     },
   )
 
+  // Added rows waiting for their insert. Kept apart from `data` so a fetch that lands meanwhile cannot drop them;
+  // they carry their final id (generated here), so once the fetch has them the copy here is ignored.
+  const pendingAdds = ref<ShoppingItem[]>([])
+
+  const items = computed((): ShoppingItem[] => {
+    const saved = new Set(data.value.items.map(i => i.id))
+    return [...data.value.items, ...pendingAdds.value.filter(i => !saved.has(i.id))]
+  })
+
+  const sections = computed(() => sortByPosition(data.value.sections))
+
   const groups = computed((): ShoppingGroup[] => {
     const bySection = new Map<string | null, ShoppingItem[]>()
-    for (const item of data.value.items) {
+    for (const item of items.value) {
       const key = item.sectionId
       bySection.set(key, [...(bySection.get(key) ?? []), item])
     }
@@ -104,15 +117,15 @@ export function useShopping() {
       section: null,
       items: sortByPosition(bySection.get(null) ?? []),
     }
-    const sections = sortByPosition(data.value.sections).map(section => ({
+    const rest = sections.value.map(section => ({
       section,
       items: sortByPosition(bySection.get(section.id) ?? []),
     }))
-    return [top, ...sections]
+    return [top, ...rest]
   })
 
-  const isEmpty = computed(() => data.value.items.length === 0 && data.value.sections.length === 0)
-  const remaining = computed(() => data.value.items.filter(i => !i.checked).length)
+  const isEmpty = computed(() => items.value.length === 0 && data.value.sections.length === 0)
+  const remaining = computed(() => items.value.filter(i => !i.checked).length)
 
   function patchItem(id: string, fields: Partial<ShoppingItem>) {
     data.value = {
@@ -145,8 +158,76 @@ export function useShopping() {
     }
   }
 
+  /**
+   * Adds items (already cleaned, e.g. by `parseItemLines`) to the end of a section (null = top area), in order.
+   * They show at once and are saved in one insert; on failure they are removed again and false is returned so
+   * the caller can keep the text.
+   */
+  async function addItems(names: string[], sectionId: string | null): Promise<boolean> {
+    const listId = data.value.listId
+    if (!listId || !householdId.value || names.length === 0) {
+      return false
+    }
+    // Rapid entry: earlier adds may still be pending, so count them when finding the end of the section.
+    let position = positionAtEnd(items.value.filter(i => i.sectionId === sectionId))
+    const added: ShoppingItem[] = names.map((name) => {
+      const item = {
+        id: crypto.randomUUID(),
+        sectionId,
+        name,
+        checked: false,
+        position,
+        pending: true,
+      }
+      position += 1
+      return item
+    })
+    pendingAdds.value = [...pendingAdds.value, ...added]
+
+    const { error: insertError } = await supabase.from('shopping_items').insert(added.map(item => ({
+      id: item.id,
+      list_id: listId,
+      household_id: householdId.value!,
+      section_id: item.sectionId,
+      name: item.name,
+      position: item.position,
+    })))
+
+    const ids = new Set(added.map(i => i.id))
+    pendingAdds.value = pendingAdds.value.filter(i => !ids.has(i.id))
+    if (insertError) {
+      if (names.length === 1) {
+        // The caller puts the text back into the input.
+        toast.error('Could not add the item. Please try again.')
+      } else {
+        toast.error(`Could not add ${names.length} items.`, {
+          duration: 10_000,
+          action: {
+            label: 'Retry',
+            onClick: () => {
+              void addItems(names, sectionId)
+            },
+          },
+        })
+      }
+      return false
+    }
+    // Saved: keep them in the list (a fetch may already have brought them in).
+    const known = new Set(data.value.items.map(i => i.id))
+    data.value = {
+      ...data.value,
+      items: [
+        ...data.value.items,
+        ...added.filter(i => !known.has(i.id)).map(({ pending: _pending, ...item }) => item),
+      ],
+    }
+    return true
+  }
+
   return {
     groups,
+    sections,
+    addItems,
     isEmpty,
     remaining,
     pending,

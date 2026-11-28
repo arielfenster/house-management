@@ -15,11 +15,12 @@ const emit = defineEmits<{
 
 <template>
   <!-- `hover:` only applies on devices that can hover (Tailwind v4), so phones get no sticky highlight. -->
-  <li class="border-b border-foreground/10 last:border-b-0">
+  <li class="border-b border-foreground/10 last:border-b-0" :class="{ 'opacity-60': props.item.pending }">
     <button
       type="button"
       role="checkbox"
       :aria-checked="props.item.checked"
+      :disabled="props.item.pending"
       class="group flex min-h-11 w-full items-center gap-3 px-3 text-start outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
       @click="emit('toggle', !props.item.checked)"
     >

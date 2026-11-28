@@ -2,9 +2,9 @@
 import { ShoppingCartIcon } from '@lucide/vue'
 
 // Shopping (features/SHOPPING.md): the household's list — items without a section on top, then each section
-// under a small heading; one tap ticks an item (optimistic, SHOP-004). Adding, editing and reordering come in
-// SHOP-005…008, realtime in SHOP-009.
-const { groups, isEmpty, remaining, pending, error, refresh, setChecked } = useShopping()
+// under a small heading; one tap ticks an item (optimistic, SHOP-004); fast entry bar kept in view at the top
+// (SHOP-005). Editing and reordering come in SHOP-006…008, realtime in SHOP-009.
+const { groups, sections, addItems, isEmpty, remaining, pending, error, refresh, setChecked } = useShopping()
 
 const loading = computed(() => pending.value && isEmpty.value)
 </script>
@@ -18,6 +18,11 @@ const loading = computed(() => pending.value && isEmpty.value)
         </span>
       </template>
     </PageHeader>
+
+    <!-- Sticky so it stays reachable while scrolling a long list in the store. -->
+    <div class="sticky top-0 z-20 -mx-4 mb-3 bg-background px-4 py-2">
+      <ShoppingAddBar :sections="sections" :add="addItems" />
+    </div>
 
     <div v-if="loading" class="rounded-lg border border-foreground/20 bg-card shadow-xs" aria-busy="true" aria-label="Loading the shopping list">
       <div v-for="i in 6" :key="i" class="flex h-11 items-center gap-3 border-b border-foreground/10 px-3 last:border-b-0">
@@ -33,7 +38,7 @@ const loading = computed(() => pending.value && isEmpty.value)
       </Button>
     </div>
 
-    <EmptyState v-else-if="isEmpty" title="Your list is empty" description="Items you add show here for everyone in the household.">
+    <EmptyState v-else-if="isEmpty" title="Your list is empty" description="Type an item above and press Enter, or paste a list — one item per line.">
       <ShoppingCartIcon />
     </EmptyState>
 

@@ -16,7 +16,8 @@ Prices, quantities, inventory, product DB, barcodes, store integrations, analyti
 - I tick items as I walk through Produce.
 
 ## 5. Main interactions
-Persistent add input at top (or bottom on mobile) targeting the *current section* (selectable chip, defaults to the last used). Enter adds + keeps focus. Pasted multi-line text → one item per non-empty line. "New section" inline input. Long-press/handle drag to reorder; item menu → move to section. "Clear completed" button.
+Persistent add input at top (or bottom on mobile) targeting the *current section* (selectable chip, defaults to the last used). Enter adds + keeps focus. Pasted multi-line text → one item per non-empty line.
+Implemented (SHOP-005): the add bar is sticky at the top on all sizes (a bottom bar fights the phone keyboard). The section chip is a native select, remembered per device (localStorage; a deleted section falls back to "No section"). Items are appended to the end of the chosen section. Pasting several lines adds them at once; list markers (`- `, `• `, `1. `, `[ ]`) are stripped. A failed single add puts the text back in the input; a failed paste shows a toast with Retry. "New section" inline input. Long-press/handle drag to reorder; item menu → move to section. "Clear completed" button.
 
 ## 6. UI behavior
 Section = small bold/uppercase heading with subtle separator; items = plain rows with checkbox; checked = muted + strikethrough and remain in place; no cards. Tap target ≥ 44px. Inline edit by tapping text.
