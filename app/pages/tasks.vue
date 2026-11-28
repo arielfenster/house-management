@@ -143,7 +143,7 @@ async function onListsChanged() {
 
     <TaskQuickAdd :add="quickAdd" class="mb-3" @more="openNew" />
 
-    <TaskFilterBar :counts="counts" :categories="categories" :rooms="rooms" class="mb-3" />
+    <TaskFilterBar :counts="counts" :categories="categories" :rooms="rooms" :members="members" class="mb-3" />
 
     <div v-if="loading" class="rounded-lg border border-foreground/20 bg-card shadow-xs" aria-busy="true" aria-label="Loading tasks">
       <div v-for="i in 5" :key="i" class="flex h-14 items-center gap-3 border-b border-foreground/10 px-4 last:border-b-0">

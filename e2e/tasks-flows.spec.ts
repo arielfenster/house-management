@@ -85,6 +85,13 @@ test('custom category and room inline, then filter, search and rename', async ({
     await page.getByRole('button', { name: 'Clear filters' }).click()
     await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
 
+    // Assignee: nothing is assigned to me yet; both tasks are unassigned.
+    await page.getByRole('combobox', { name: 'Assigned to' }).selectOption({ label: user.displayName })
+    await expect(page.getByText('No matching tasks')).toBeVisible()
+    await page.getByRole('combobox', { name: 'Assigned to' }).selectOption({ label: 'Unassigned' })
+    await expect(taskList(page).getByRole('listitem')).toHaveCount(2)
+    await page.getByRole('button', { name: 'Clear filters' }).click()
+
     // Search.
     await page.getByRole('button', { name: 'Search', exact: true }).click()
     await page.getByRole('searchbox', { name: 'Search tasks' }).fill('kettle')

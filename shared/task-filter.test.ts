@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   EMPTY_FACETS,
+  UNASSIGNED,
   activeFacetCount,
   countByStatus,
   filterTasks,
@@ -14,6 +15,8 @@ const CLEANING = 'c1'
 const MAINTENANCE = 'c2'
 const KITCHEN = 'r1'
 const BALCONY = 'r2'
+const DANA = 'u1'
+const NOA = 'u2'
 
 function task(title: string, fields: Partial<FilterableTask> = {}): FilterableTask & { title: string } {
   return {
@@ -23,15 +26,16 @@ function task(title: string, fields: Partial<FilterableTask> = {}): FilterableTa
     kind: 'one_time',
     categoryId: null,
     roomId: null,
+    assignedTo: null,
     ...fields,
   }
 }
 
 const TASKS = [
   task('Clean AC filters', { dueDate: '2026-11-24', kind: 'recurring', categoryId: MAINTENANCE }),
-  task('Water plants', { dueDate: TODAY, kind: 'recurring', roomId: BALCONY }),
+  task('Water plants', { dueDate: TODAY, kind: 'recurring', roomId: BALCONY, assignedTo: NOA }),
   task('Descale the kettle', { dueDate: '2026-12-07', kind: 'recurring', categoryId: CLEANING, roomId: KITCHEN }),
-  task('Fix bathroom faucet', { dueDate: '2026-11-30', categoryId: MAINTENANCE, description: 'Buy a new washer' }),
+  task('Fix bathroom faucet', { dueDate: '2026-11-30', categoryId: MAINTENANCE, description: 'Buy a new washer', assignedTo: DANA }),
   task('Call the plumber', { categoryId: MAINTENANCE }),
   task('לקנות מנורה לסלון'),
 ]
@@ -62,9 +66,17 @@ describe('facets', () => {
     expect(titles(filterTasks(TASKS, 'upcoming', facets({ kind: 'recurring' }), TODAY))).toEqual(['Water plants', 'Descale the kettle'])
   })
 
+  it('assignee: a member, or unassigned', () => {
+    expect(titles(filterTasks(TASKS, 'all', facets({ assignee: DANA }), TODAY))).toEqual(['Fix bathroom faucet'])
+    expect(titles(filterTasks(TASKS, 'all', facets({ assignee: NOA, roomId: BALCONY }), TODAY))).toEqual(['Water plants'])
+    expect(filterTasks(TASKS, 'all', facets({ assignee: UNASSIGNED }), TODAY)).toHaveLength(4)
+    expect(filterTasks(TASKS, 'all', facets({ assignee: DANA, categoryId: CLEANING }), TODAY)).toEqual([])
+  })
+
   it('counts the active facets (not the search text)', () => {
     expect(activeFacetCount(EMPTY_FACETS)).toBe(0)
     expect(activeFacetCount(facets({ categoryId: CLEANING, kind: 'recurring', query: 'x' }))).toBe(2)
+    expect(activeFacetCount(facets({ roomId: KITCHEN, categoryId: CLEANING, assignee: UNASSIGNED, kind: 'one_time' }))).toBe(4)
   })
 })
 

@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { SearchIcon, XIcon } from '@lucide/vue'
 import { useEventListener } from '@vueuse/core'
+import type { HouseholdMember } from '~/composables/use-household-members'
 import type { TaskListValue } from '~/composables/use-task-list'
-import { activeFacetCount, type OpenTaskStatusFilter, type TaskStatusFilter } from '#shared/task-filter'
+import { UNASSIGNED, activeFacetCount, type OpenTaskStatusFilter, type TaskStatusFilter } from '#shared/task-filter'
 
-// Status tabs, search box and category/room/type filters for the task list (TASKS-009).
+// Status tabs, search box and room/category/assignee/type filters for the task list (TASKS-009).
 // Search and filters are opened from the page header; state lives in useTaskFilters.
 const props = defineProps<{
   /** Open-task counts per status (with facets and search applied). */
   counts: Record<OpenTaskStatusFilter, number>
   categories: TaskListValue[]
   rooms: TaskListValue[]
+  members: HouseholdMember[]
 }>()
 
 const { status, facets, searchOpen, filtersOpen, clearFacets } = useTaskFilters()
@@ -58,6 +60,20 @@ const roomOptions = computed(() => [
     label: r.name,
   })),
 ])
+const assigneeOptions = computed(() => [
+  {
+    value: '',
+    label: 'Anyone',
+  },
+  {
+    value: UNASSIGNED,
+    label: 'Unassigned',
+  },
+  ...props.members.map(m => ({
+    value: m.id,
+    label: m.displayName,
+  })),
+])
 const KIND_OPTIONS = [
   {
     value: '',
@@ -84,6 +100,12 @@ const roomId = computed({
   get: () => facets.value.roomId ?? '',
   set: (value: string) => {
     facets.value = { ...facets.value, roomId: value || null }
+  },
+})
+const assignee = computed({
+  get: () => facets.value.assignee ?? '',
+  set: (value: string) => {
+    facets.value = { ...facets.value, assignee: value || null }
   },
 })
 const kind = computed({
@@ -164,11 +186,13 @@ if (import.meta.client) {
       </Button>
     </div>
 
-    <div v-if="filtersOpen" class="grid grid-cols-1 gap-2 rounded-lg border border-foreground/15 p-2 sm:grid-cols-3">
-      <FormSelect id="filter-category" v-model="categoryId" label="Category" hide-label :options="categoryOptions" />
+    <!-- Room, category, assignee, type: two columns on phones, one row on wider screens. -->
+    <div v-if="filtersOpen" class="grid grid-cols-2 gap-2 rounded-lg border border-foreground/15 p-2 sm:grid-cols-4">
       <FormSelect id="filter-room" v-model="roomId" label="Room" hide-label :options="roomOptions" />
+      <FormSelect id="filter-category" v-model="categoryId" label="Category" hide-label :options="categoryOptions" />
+      <FormSelect id="filter-assignee" v-model="assignee" label="Assigned to" hide-label :options="assigneeOptions" />
       <FormSelect id="filter-kind" v-model="kind" label="Type" hide-label :options="KIND_OPTIONS" />
-      <div v-if="activeFacetCount(facets)" class="sm:col-span-3">
+      <div v-if="activeFacetCount(facets)" class="col-span-2 sm:col-span-4">
         <Button type="button" variant="link" size="sm" class="h-auto px-0" @click="clearFacets">
           Clear filters
         </Button>
