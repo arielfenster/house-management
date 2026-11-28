@@ -1,6 +1,6 @@
 # Phase 2: Shopping
 
-Status: In Progress
+Status: Implemented and deployed (2026-11-28); real-phone store test pending
 
 ## Goal
 A fast shared shopping list useful in the supermarket.
@@ -23,16 +23,18 @@ Shopping tables + RLS, realtime sync, `/shopping` UI.
 - [ ] SHOP-008a: Inline "+ Add an item" row at the end of each section (and the top area): tap → input in place; Enter adds to the end of that section and keeps focus; multi-line paste adds all lines there; Esc / empty blur closes. Functionality only — keep current styling; hidden in reorder mode
 - [x] SHOP-009: Realtime subscription + refetch-on-focus; reconcile own echoes
 - [x] SHOP-010: Playwright (rapid entry, two-context sync) + mobile check
-- [ ] SHOP-011: Deploy
+- [x] SHOP-011: Deploy — both migrations applied to prod (SHOP-001, SHOP-009); `main` auto-deploys on Vercel; live build verified
 
 ## Acceptance Criteria
-- [ ] Adding many items is fast with input staying focused
-- [ ] Custom sections work; ticked items leave instantly (with undo)
-- [ ] Changes persist after refresh
-- [ ] Both members see the same list; concurrent changes converge predictably
+- [x] Adding many items is fast with input staying focused
+- [x] Custom sections work; ticked items leave instantly (with undo)
+- [x] Changes persist after refresh
+- [x] Both members see the same list; concurrent changes converge predictably
 
 ## Verification
 Unit/RLS/e2e; typecheck/lint/build; real-phone test in a store-like scenario.
+
+Status: unit, RLS and e2e (phone + desktop projects, incl. two-member realtime) pass; typecheck/lint/build pass. Remaining: the real-phone test in a store-like scenario (touch drag in Arrange mode, keyboard behaviour of the add bar).
 
 ## Definition of Done
 Tasks verified and checked; docs updated; deployed.

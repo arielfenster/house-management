@@ -32,7 +32,7 @@ Checked against Supabase docs on 2026-11-28:
   npx supabase db dump --remote --data-only -f prod-data.sql
   ```
   Storage files (Phase 3) are not included in database dumps; back them up separately.
-- **Extensions:** `pg_cron` and `pg_net` are available on the project (verified with a read-only query; enabled in Phase 4). Realtime is included on the Free plan (quotas apply); not exercised until Phase 2.
+- **Extensions:** `pg_cron` and `pg_net` are available on the project (verified with a read-only query; enabled in Phase 4). Realtime is included on the Free plan (quotas apply); used by the shopping list since Phase 2 (`shopping_items`, `shopping_sections` in the `supabase_realtime` publication).
 - No emails are sent (email confirmation disabled), so no SMTP provider is needed; password resets are done manually (see "Auth settings").
 
 ## Auth settings (D11, FOUNDATION-015)
