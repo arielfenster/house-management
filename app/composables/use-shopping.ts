@@ -1,6 +1,6 @@
 import { useEventListener } from '@vueuse/core'
 import { toast } from 'vue-sonner'
-import { positionAtEnd, sortByPosition } from '#shared/shopping-position'
+import { planMove, positionAtEnd, sortByPosition, type PositionUpdate } from '#shared/shopping-position'
 
 export interface ShoppingSection {
   id: string
@@ -241,6 +241,96 @@ export function useShopping() {
     })
   }
 
+  /** Saved items of a group (section id, or null for the top area), in display order. Pending rows are left out. */
+  function savedGroup(sectionId: string | null): ShoppingItem[] {
+    return sortByPosition(data.value.items.filter(i => i.sectionId === sectionId))
+  }
+
+  async function writePositions(
+    table: 'shopping_items' | 'shopping_sections',
+    updates: PositionUpdate[],
+    moved?: { id: string, sectionId: string | null },
+  ): Promise<boolean> {
+    // Normally a single row; a renumbered group (rare) writes each of its rows.
+    const results = await Promise.all(updates.map((u) => {
+      if (table === 'shopping_items' && moved && u.id === moved.id) {
+        return supabase.from('shopping_items').update({ position: u.position, section_id: moved.sectionId }).eq('id', u.id)
+      }
+      return supabase.from(table).update({ position: u.position }).eq('id', u.id)
+    }))
+    return results.every(r => !r.error)
+  }
+
+  /**
+   * Moves an item to `index` within a section (null = top area), from the same or another section (SHOP-008).
+   * Writes only the moved row unless the target group had to be renumbered. `index` defaults to the end.
+   * On failure the list is reloaded (the server state is the truth) with a toast.
+   */
+  async function moveItem(item: ShoppingItem, sectionId: string | null, index?: number) {
+    if (item.pending) {
+      return
+    }
+    const group = savedGroup(sectionId)
+    const updates = planMove(group, item.id, index ?? group.length)
+    if (updates.length === 0 && item.sectionId === sectionId) {
+      return
+    }
+    // Same position number but another section (e.g. moved to an empty section at STEP): still write the section.
+    const writes = updates.some(u => u.id === item.id)
+      ? updates
+      : [...updates, { id: item.id, position: item.position }]
+    const byId = new Map(writes.map(u => [u.id, u.position]))
+    data.value = {
+      ...data.value,
+      items: data.value.items.map((i) => {
+        const position = byId.get(i.id)
+        if (position === undefined) {
+          return i
+        }
+        return {
+          ...i,
+          position,
+          sectionId: i.id === item.id ? sectionId : i.sectionId,
+        }
+      }),
+    }
+    const ok = await writePositions('shopping_items', writes, { id: item.id, sectionId })
+    if (!ok) {
+      toast.error(`Could not move “${item.name}”.`)
+      await refresh()
+    }
+  }
+
+  /** Moves a section to `index` among the sections (SHOP-008); its items go with it. */
+  async function moveSection(section: ShoppingSection, index: number) {
+    if (section.pending) {
+      return
+    }
+    const updates = planMove(sortByPosition(data.value.sections), section.id, index)
+    if (updates.length === 0) {
+      return
+    }
+    const byId = new Map(updates.map(u => [u.id, u.position]))
+    data.value = {
+      ...data.value,
+      sections: data.value.sections.map((s) => {
+        const position = byId.get(s.id)
+        if (position === undefined) {
+          return s
+        }
+        return {
+          ...s,
+          position,
+        }
+      }),
+    }
+    const ok = await writePositions('shopping_sections', updates)
+    if (!ok) {
+      toast.error(`Could not move the “${section.name}” section.`)
+      await refresh()
+    }
+  }
+
   /**
    * Renames an item at once (name already validated); rolls back with a toast if saving fails. If the other member
    * ticked it off meanwhile, the update matches nothing and the item leaves the list here too.
@@ -478,5 +568,7 @@ export function useShopping() {
     completeItem,
     deleteItem,
     renameItem,
+    moveItem,
+    moveSection,
   }
 }

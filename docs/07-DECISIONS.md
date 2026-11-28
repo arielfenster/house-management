@@ -72,8 +72,11 @@ Spike result: **keep `@vite-pwa/nuxt`** (2.0.4, depends on `@nuxt/kit ^4.6.4`; t
 ### D21 — Task completion RPCs are `security definer`; completions are client read-only (TASKS-002)
 04 originally described `complete_task` as security invoker. That would need an insert grant (and policy) on `task_completions`, letting clients write history rows without advancing the task. Instead `complete_task` and `uncomplete_task` are `security definer`, check visibility themselves with the same rule as the RLS policies (`private.task_visible`), lock the task row (`for update`) and write the completion and the task in one transaction. Clients only `select` completions; `completed_at`/`last_completed_at` are not client-writable. Both kinds of task record a completion row (one-time too: "who did it"); undo removes the latest completion only (an optional completion id guards against removing someone else's later one). Related schema choices: `tasks.created_by` is `on delete set null` (a deleted account must not delete shared tasks); categories/rooms and completions use composite foreign keys with `household_id` so references never cross households; a member leaving is unassigned from the household's tasks by trigger. 2026-11-28.
 
-## Still open
-- None.
-
 ### D22 — Shopping: ticking an item deletes it (2026-11-28)
 Bought items are no use on the list, so ticking removes the row and deletes it immediately (no checked state, no "Clear completed"). Immediate delete rather than delete-after-undo-window: when two members split up in a store, the other phone should see the item gone at once (realtime). Undo (one reused toast, latest item only) re-inserts the row with the same id/section/position, which the client-supplied id allows. `shopping_items.checked` is left in place, unused. Trade-off: no purchase history; add a small history table later if suggestions ("you often buy…") are wanted.
+
+### D23 — Drag-and-drop: SortableJS behind an "Arrange" mode (SHOP-008)
+Reordering items and sections (and moving items across sections) uses `sortablejs` (~15 KB gz, mature touch support; no Vue wrapper) through a small `v-sortable` directive (`app/utils/sortable.ts`). Drags start only from grip handles shown in an **Arrange** mode toggled from the page header, so in the store a tap always ticks and a swipe always scrolls. After a drop the directive puts the DOM back and the page re-keys the list box, so Vue re-renders from state (SortableJS and Vue's transition group otherwise disagree about moved nodes). Moving an item to another section is also possible without dragging, from the item editor's section picker. Writes follow features/SHOPPING.md §9: only the moved row, or the whole group when it is renumbered. 2026-11-28.
+
+## Still open
+- None.

@@ -14,6 +14,7 @@ Verified by web search on 2026-11-20 against official docs/community sources; **
 | Validation | `valibot` | Add (small, tree-shakeable) for server-route input and forms; schemas live in `shared/` and types are inferred with `v.InferOutput`. |
 | Typed data access | `supabase-js` + generated `Database` types | Always use the SDK (no raw `fetch`/hand-written SQL strings from the app). Generate `types/database.types.ts` with `supabase gen types typescript --local`, and type every client as `SupabaseClient<Database>` (`@nuxtjs/supabase` accepts the `Database` generic via `useSupabaseClient<Database>()` / `serverSupabaseClient<Database>(event)`). RPCs (`create_household`, `complete_task`, …) are called with `supabase.rpc()` and are typed from the same generated file. |
 | Recurrence date math | Hand-written pure TS (date-only, ~40 lines) with tests; no library | Avoids Luxon/dayjs dependency; household timezone needed only to compute "today". Revisit if it grows. |
+| Drag-and-drop | `sortablejs` via a small `v-sortable` directive | Shopping reorder only (D23). |
 | Tests | Vitest (unit + DB integration), Playwright (e2e) | Keep. |
 | Lint/format | ESLint (`@nuxt/eslint`) + Prettier-compatible stylistic rules | Add; part of "checks". |
 | CI | GitHub Actions (`.github/workflows/ci.yml`): typecheck, lint; on a local `supabase start` stack: DB types check, vitest (incl. RLS), build, secret-key-in-bundle check, Playwright smoke | Added in Phase 0. |

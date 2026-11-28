@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckIcon, PencilIcon, Trash2Icon, XIcon } from '@lucide/vue'
+import { CheckIcon, GripVerticalIcon, PencilIcon, Trash2Icon, XIcon } from '@lucide/vue'
 import type { ShoppingSection } from '~/composables/use-shopping'
 import { SHOPPING_SECTION_NAME_MAX } from '#shared/shopping-paste'
 import { checkSectionName } from '#shared/validation/shopping'
@@ -11,6 +11,8 @@ const props = defineProps<{
   /** All visible sections, for the duplicate-name check. */
   sections: ShoppingSection[]
   rename: (section: ShoppingSection, name: string) => Promise<boolean>
+  /** Arrange mode (SHOP-008): a drag handle instead of the pencil. */
+  arranging: boolean
 }>()
 
 const emit = defineEmits<{
@@ -52,6 +54,10 @@ function remove() {
   editing.value = false
   emit('delete')
 }
+
+watch(() => props.arranging, () => {
+  editing.value = false
+})
 </script>
 
 <template>
@@ -60,7 +66,16 @@ function remove() {
       <h2 :id="headingId" class="min-w-0 flex-1 truncate pt-3 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase" dir="auto">
         {{ props.section.name }}
       </h2>
+      <span
+        v-if="props.arranging"
+        class="section-drag-handle -my-1 grid size-11 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground active:cursor-grabbing"
+        :aria-label="`Drag to move section ${props.section.name}`"
+        role="img"
+      >
+        <GripVerticalIcon class="size-4" />
+      </span>
       <Button
+        v-else
         variant="ghost"
         size="icon"
         class="-my-1 size-11 text-muted-foreground"

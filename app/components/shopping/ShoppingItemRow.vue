@@ -1,24 +1,33 @@
 <script setup lang="ts">
-import { CheckIcon, PencilIcon, Trash2Icon, XIcon } from '@lucide/vue'
+import { CheckIcon, GripVerticalIcon, PencilIcon, Trash2Icon, XIcon } from '@lucide/vue'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import * as v from 'valibot'
-import type { ShoppingItem } from '~/composables/use-shopping'
+import type { ShoppingItem, ShoppingSection } from '~/composables/use-shopping'
 import { SHOPPING_ITEM_NAME_MAX } from '#shared/shopping-paste'
 import { shoppingItemNameSchema } from '#shared/validation/shopping'
 
 // Plain shopping row (features/SHOPPING.md §6): square checkbox + name. Ticking shows the check for a moment,
 // then the row is removed (the page collapses it; D22). The row is one large tick target — in a store that beats
 // precision — so editing has its own pencil at the end, which turns the row into an inline editor
-// (Enter saves, Esc cancels, delete with Undo).
+// (Enter saves, Esc cancels, section picker to move it, delete with Undo). In arrange mode (SHOP-008) the row only
+// shows its name and a drag handle.
 const props = defineProps<{
   item: ShoppingItem
   rename: (item: ShoppingItem, name: string) => Promise<boolean>
+  /** Sections to move the item to from the editor. */
+  sections: ShoppingSection[]
+  arranging: boolean
 }>()
 
 const emit = defineEmits<{
   done: []
   delete: []
+  /** Moved to another section from the editor (null = no section). */
+  move: [sectionId: string | null]
 }>()
+
+/** Value of the "no section" option. */
+const TOP = ''
 
 /** How long the tick is visible before the row leaves. */
 const TICK_MS = 300
@@ -71,12 +80,40 @@ function remove() {
   editing.value = false
   emit('delete')
 }
+
+function onSectionChange(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  editing.value = false
+  emit('move', value === TOP ? null : value)
+}
+
+// Leaving arrange mode or starting it closes an open editor.
+watch(() => props.arranging, () => {
+  editing.value = false
+})
 </script>
 
 <template>
   <!-- `hover:` only applies on devices that can hover (Tailwind v4), so phones get no sticky highlight. -->
-  <li class="overflow-hidden border-b border-foreground/10 last:border-b-0" :class="{ 'opacity-60': props.item.pending }">
-    <div v-if="!editing" class="flex items-center">
+  <li
+    class="overflow-hidden border-b border-foreground/10 bg-card last:border-b-0"
+    :class="{ 'opacity-60': props.item.pending }"
+    :data-id="props.item.id"
+    :data-pending="props.item.pending ? '' : undefined"
+  >
+    <div v-if="props.arranging" class="flex min-h-11 items-center">
+      <span class="min-w-0 flex-1 py-2.5 ps-3 text-sm break-words" dir="auto">{{ props.item.name }}</span>
+      <!-- touch-none: a drag on the handle never scrolls the page. -->
+      <span
+        class="drag-handle grid size-11 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground active:cursor-grabbing"
+        :aria-label="`Drag to move ${props.item.name}`"
+        role="img"
+      >
+        <GripVerticalIcon class="size-4" />
+      </span>
+    </div>
+
+    <div v-else-if="!editing" class="flex items-center">
       <button
         type="button"
         role="checkbox"
@@ -148,6 +185,23 @@ function remove() {
       <p v-if="error" :id="`${inputId}-error`" class="px-1 text-xs text-destructive">
         {{ error }}
       </p>
+      <div class="flex items-center gap-2 px-1 pt-0.5">
+        <label :for="`${inputId}-section`" class="text-xs text-muted-foreground">Section</label>
+        <select
+          :id="`${inputId}-section`"
+          :value="props.item.sectionId ?? TOP"
+          class="h-9 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+          dir="auto"
+          @change="onSectionChange"
+        >
+          <option :value="TOP">
+            No section
+          </option>
+          <option v-for="section in props.sections" :key="section.id" :value="section.id" dir="auto">
+            {{ section.name }}
+          </option>
+        </select>
+      </div>
     </form>
   </li>
 </template>

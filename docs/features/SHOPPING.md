@@ -25,6 +25,8 @@ Ticking (D22): the check shows for ~300 ms, then the row collapses out and the i
 
 Editing items (SHOP-007): the row is one large tick target, so tapping the text does not edit; instead a light pencil at the end of each row turns it into an inline editor (Enter saves, Esc cancels, delete button). Names are cleaned like typed entry (`shoppingItemNameSchema`). Delete works like ticking (immediate delete, the same reused Undo toast, "Deleted “Milk”"). Renaming an item the other member already ticked off removes it here with a short notice.
 
+Reordering (SHOP-008, D23): an **Arrange** button in the header switches the list to arrange mode — rows and section headings show grip handles (ticking and editing are off, the add bar is hidden, an empty "No section" area is shown as a drop target). Dragging a handle reorders items within a section, moves them to another section (or the top area), or reorders sections (always below the top area). Each drop writes the moved row's position (and section), or renumbers the group when the gap is too small. Outside arrange mode, the item editor's Section picker moves an item to the end of another section.
+
 ## 6. UI behavior
 Section = small bold/uppercase heading with subtle separator; items = plain rows with checkbox; ticking shows check + strikethrough briefly, then the row leaves; no cards. Tap target ≥ 44px. Inline edit from the row's pencil (tapping the text ticks the item).
 
