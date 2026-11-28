@@ -27,6 +27,8 @@ Editing items (SHOP-007): the row is one large tick target, so tapping the text 
 
 Reordering (SHOP-008, D23): an **Arrange** button in the header switches the list to arrange mode — rows and section headings show grip handles (ticking and editing are off, the add bar is hidden, an empty "No section" area is shown as a drop target). Dragging a handle reorders items within a section, moves them to another section (or the top area), or reorders sections (always below the top area). Each drop writes the moved row's position (and section), or renumbers the group when the gap is too small. Outside arrange mode, the item editor's Section picker moves an item to the end of another section.
 
+Sync (SHOP-009): the page subscribes to Supabase Realtime Postgres Changes on `shopping_items` and `shopping_sections` (inserts/updates filtered by `list_id`; deletes cannot be filtered, unknown ids are ignored). Events are merged by id, so our own echoes are harmless (no version column needed). The list is refetched when the app returns to the foreground and when the channel reconnects (events may have been missed). Delete events of other households reach a subscriber only as a bare uuid (see the migration).
+
 ## 6. UI behavior
 Section = small bold/uppercase heading with subtle separator; items = plain rows with checkbox; ticking shows check + strikethrough briefly, then the row leaves; no cards. Tap target ≥ 44px. Inline edit from the row's pencil (tapping the text ticks the item).
 

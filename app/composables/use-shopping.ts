@@ -1,5 +1,7 @@
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import { useEventListener } from '@vueuse/core'
 import { toast } from 'vue-sonner'
+import type { Database } from '~~/types/database.types'
 import { planMove, positionAtEnd, sortByPosition, type PositionUpdate } from '#shared/shopping-position'
 
 export interface ShoppingSection {
@@ -25,6 +27,9 @@ export interface ShoppingGroup {
   section: ShoppingSection | null
   items: ShoppingItem[]
 }
+
+type ItemRow = Database['public']['Tables']['shopping_items']['Row']
+type SectionRow = Database['public']['Tables']['shopping_sections']['Row']
 
 const UNDO_TOAST_MS = 8000
 /** Ticked-item toast: one toast (fixed id) replaced by each tick, so fast shopping never stacks toasts. */
@@ -542,14 +547,117 @@ export function useShopping() {
     })
   }
 
+  // ---------------------------------------------------------------------------------------------------------------
+  // Realtime (SHOP-009): the other member's changes arrive as Postgres Changes and are merged by id. Our own writes
+  // come back as echoes too; merging is idempotent (an insert/update replaces the row by id, a delete of an unknown id
+  // is ignored), so echoes need no special handling and a late echo is corrected by the next one.
+  // ---------------------------------------------------------------------------------------------------------------
+  function upsertItemFromRow(row: ItemRow) {
+    const item: ShoppingItem = {
+      id: row.id,
+      sectionId: row.section_id,
+      name: row.name,
+      position: row.position,
+    }
+    data.value = {
+      ...data.value,
+      items: [...data.value.items.filter(i => i.id !== item.id), item],
+    }
+  }
+
+  function upsertSectionFromRow(row: SectionRow) {
+    const section: ShoppingSection = {
+      id: row.id,
+      name: row.name,
+      position: row.position,
+    }
+    data.value = {
+      ...data.value,
+      sections: [...data.value.sections.filter(s => s.id !== section.id), section],
+    }
+  }
+
+  function onItemChange(payload: RealtimePostgresChangesPayload<ItemRow>) {
+    if (payload.eventType === 'DELETE') {
+      const id = payload.old.id
+      if (id) {
+        removeLocal(id)
+      }
+      return
+    }
+    upsertItemFromRow(payload.new)
+  }
+
+  function onSectionChange(payload: RealtimePostgresChangesPayload<SectionRow>) {
+    if (payload.eventType === 'DELETE') {
+      const id = payload.old.id
+      if (id) {
+        // Its items are deleted by the cascade (their own events follow); drop them now so nothing dangles.
+        data.value = {
+          ...data.value,
+          sections: data.value.sections.filter(s => s.id !== id),
+          items: data.value.items.filter(i => i.sectionId !== id),
+        }
+      }
+      return
+    }
+    upsertSectionFromRow(payload.new)
+  }
+
+  /** Whether the channel was subscribed before: a later SUBSCRIBED is a reconnect, and events may have been missed. */
+  let wasSubscribed = false
+  let channel: RealtimeChannel | null = null
+
+  function unsubscribe() {
+    if (channel) {
+      void supabase.removeChannel(channel)
+      channel = null
+    }
+  }
+
+  function subscribe(listId: string) {
+    unsubscribe()
+    wasSubscribed = false
+    const filter = `list_id=eq.${listId}`
+    channel = supabase
+      .channel(`shopping:${listId}`)
+      .on<ItemRow>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shopping_items', filter }, onItemChange)
+      .on<ItemRow>('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'shopping_items', filter }, onItemChange)
+      // Delete events cannot be filtered by column; unknown ids are ignored.
+      .on<ItemRow>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'shopping_items' }, onItemChange)
+      .on<SectionRow>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shopping_sections', filter }, onSectionChange)
+      .on<SectionRow>('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'shopping_sections', filter }, onSectionChange)
+      .on<SectionRow>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'shopping_sections' }, onSectionChange)
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          if (wasSubscribed) {
+            void refresh()
+          }
+          wasSubscribed = true
+        }
+      })
+  }
+
   if (import.meta.client) {
-    // Leaving the app ends the undo window: delete now rather than risk the request never being sent.
+    watch(() => data.value.listId, (listId) => {
+      if (listId) {
+        subscribe(listId)
+      } else {
+        unsubscribe()
+      }
+    }, { immediate: true })
+    onBeforeUnmount(unsubscribe)
+
     useEventListener(document, 'visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
+        // Leaving the app ends the undo window: delete now rather than risk the request never being sent.
         flushDeletes()
+      } else {
+        // Back in the foreground: phones suspend sockets in the background, so catch up on anything missed.
+        void refresh()
       }
     })
-    // Leaving the page (in-app navigation) also ends it.
+    // Leaving the page (in-app navigation) also ends the undo window.
     onBeforeUnmount(flushDeletes)
   }
 
