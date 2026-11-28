@@ -4,7 +4,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"], // DOM: code passed to page.evaluate() in e2e tests runs in the browser
     "types": ["node"],
     "strict": true,
     "noEmit": true,

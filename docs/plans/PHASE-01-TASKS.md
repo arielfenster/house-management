@@ -22,7 +22,7 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 - [x] TASKS-008: `CreatableSelect` for category and room (create inline, auto-select, rename/delete)
 - [x] TASKS-009: Filters (All/Upcoming/Overdue/Completed + category/room/type) and search
 - [x] TASKS-010: Detail view: last completion (`last_completed_at`) + completion history
-- [ ] TASKS-011: Playwright e2e (create, complete recurring, custom category) + mobile viewport check
+- [x] TASKS-011: Playwright e2e (create, complete recurring, custom category) + mobile viewport check
 - [ ] TASKS-012: Deploy
 
 ## Acceptance Criteria

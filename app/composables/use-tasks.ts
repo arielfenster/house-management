@@ -128,7 +128,14 @@ export function useTasks() {
   const pendingDeletes = new Map<string, ReturnType<typeof setTimeout>>()
   const hiddenIds = ref(new Set<string>())
 
-  const tasks = computed(() => sortTasks(data.value.filter(t => !hiddenIds.value.has(t.id))))
+  // Quick-add rows waiting for the insert. Kept apart from `data` so a list fetch that lands meanwhile
+  // (e.g. the first load right after navigating here) cannot wipe them.
+  const pendingAdds = ref<TaskListItem[]>([])
+
+  const tasks = computed(() => sortTasks([
+    ...data.value.filter(t => !hiddenIds.value.has(t.id)),
+    ...pendingAdds.value,
+  ]))
 
   // Done tab: completed one-time tasks, fetched when first shown (TASKS-009).
   const completed = ref<TaskListItem[]>([])
@@ -192,14 +199,14 @@ export function useTasks() {
       return false
     }
     const tempId = `temp-${crypto.randomUUID()}`
-    data.value = [...data.value, {
+    pendingAdds.value = [...pendingAdds.value, {
       id: tempId,
       title: input.title,
+      description: null,
       kind: 'one_time',
       dueDate: null,
       recurrenceUnit: null,
       recurrenceInterval: null,
-      description: null,
       categoryId: null,
       categoryName: null,
       roomId: null,
@@ -213,20 +220,15 @@ export function useTasks() {
     const { data: row, error: insertError } = await supabase
       .from('tasks')
       .insert({ household_id: householdId.value, title: input.title, kind: 'one_time' })
-      .select('id, created_at')
+      .select(TASK_COLUMNS)
       .single()
-    const optimistic = data.value.find(t => t.id === tempId)
-    if (insertError || !row || !optimistic) {
-      replace(tempId, null)
+    pendingAdds.value = pendingAdds.value.filter(t => t.id !== tempId)
+    if (insertError || !row) {
       toast.error('Could not add the task. Please try again.')
       return false
     }
-    replace(tempId, {
-      ...optimistic,
-      id: row.id,
-      createdAt: row.created_at,
-      pending: false,
-    })
+    // Saved: show the real row (whatever happened to the list meanwhile).
+    replace(row.id, toItem(row))
     return true
   }
 

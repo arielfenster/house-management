@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { APP_HOME, ROUTES } from '../shared/routes'
+import { signUpWithHousehold } from './support/session'
 import { deleteUser, newUser } from './support/users'
 
 // TASKS-006: task list basics — empty state, quick add, one-tap completion (through POST /api/tasks/:id/complete)
@@ -9,15 +9,7 @@ test('quick add, complete and undo a task', async ({ page }, testInfo) => {
   const user = newUser(`tasks-${testInfo.project.name}`)
 
   try {
-    await page.goto(ROUTES.signup)
-    await page.getByLabel('Your name').fill(user.displayName)
-    await page.getByLabel('Email').fill(user.email)
-    await page.getByLabel('Password').fill(user.password)
-    await page.getByRole('button', { name: 'Sign up' }).click()
-    await page.getByLabel('Household name').fill('E2E home')
-    await page.getByRole('button', { name: 'Create household' }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
-    await expect(page).toHaveURL(new RegExp(`${APP_HOME}$`))
+    await signUpWithHousehold(page, user)
 
     await expect(page.getByText('No tasks yet')).toBeVisible()
 
@@ -53,15 +45,7 @@ test('create, edit and delete a task with the form', async ({ page }, testInfo) 
   const user = newUser(`taskform-${testInfo.project.name}`)
 
   try {
-    await page.goto(ROUTES.signup)
-    await page.getByLabel('Your name').fill(user.displayName)
-    await page.getByLabel('Email').fill(user.email)
-    await page.getByLabel('Password').fill(user.password)
-    await page.getByRole('button', { name: 'Sign up' }).click()
-    await page.getByLabel('Household name').fill('E2E home')
-    await page.getByRole('button', { name: 'Create household' }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
-    await expect(page).toHaveURL(new RegExp(`${APP_HOME}$`))
+    await signUpWithHousehold(page, user)
 
     // "More options" carries over what was typed.
     await page.getByLabel('New task').fill('Clean AC filters')

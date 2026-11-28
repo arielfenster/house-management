@@ -60,3 +60,4 @@ Deleting a category/room clears references. Deleting a task deletes its history 
 
 ## 12. Verification
 Vitest: recurrence table tests (month-end, leap year, early/late, timezone "today"), RLS tests (04 matrix), RPC tests. Playwright: create → complete → verify next due; custom category flow.
+Implemented (TASKS-011): `e2e/tasks.spec.ts` (quick add → complete → undo; form create → edit → delete) and `e2e/tasks-flows.spec.ts` (repeating task → next due in 7 days → history "Last done Today … On time"; inline category + room → filter, search, rename; Done tab → reopen; phone layout: no horizontal overflow with long/Hebrew titles, check targets ≥ 44 px, bottom nav at the bottom). All run on the phone and desktop projects; `e2e/support/session.ts` signs up a fresh user with a household.
