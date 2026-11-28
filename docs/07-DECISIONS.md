@@ -55,7 +55,7 @@ Implementation (FOUNDATION-009): `/join/<code>` forwards to `/onboarding?code=<c
 The database/RLS foundation (visibility, creator ownership, private-assignment rule) is still built and tested in Phase 1, but **no "Private" toggle or private-task UI ships in v1**; all tasks created from the UI are `shared`. To add later (see `features/TASKS.md` "Deferred"). Notes keep their private/shared columns with no UI.
 
 ### D16 — Shopping section deletion removes its items, with undo toast (Q8)
-Confirmed.
+Confirmed. **Superseded by D24** (2026-11-28): items are kept and moved to the top area.
 
 ### D17 — English UI; Hebrew only as user-entered content (Q9, clarified)
 The interface is English/LTR only: no translations, no i18n library, no RTL layout. Users will type Hebrew into task titles/descriptions, notes, shopping items and file descriptions, so free-text content must render and edit correctly: `dir="auto"` on text inputs/textareas and on elements displaying user content (so Hebrew lines are right-aligned and punctuation/mixed text behaves), a Hebrew-capable font fallback, and Hebrew test data. Search (`ILIKE`) works on Hebrew as-is. Consequences: no `@nuxtjs/i18n`; UI strings may be written inline.
@@ -77,6 +77,9 @@ Bought items are no use on the list, so ticking removes the row and deletes it i
 
 ### D23 — Drag-and-drop: SortableJS behind an "Arrange" mode (SHOP-008)
 Reordering items and sections (and moving items across sections) uses `sortablejs` (~15 KB gz, mature touch support; no Vue wrapper) through a small `v-sortable` directive (`app/utils/sortable.ts`). Drags start only from grip handles shown in an **Arrange** mode toggled from the page header, so in the store a tap always ticks and a swipe always scrolls. After a drop the directive puts the DOM back and the page re-keys the list box, so Vue re-renders from state (SortableJS and Vue's transition group otherwise disagree about moved nodes). Moving an item to another section is also possible without dragging, from the item editor's section picker. SortableJS runs with `forceFallback` (pointer events, not native HTML5 drag-and-drop) on every device: touch uses that path anyway, and it makes desktop behave the same and testable. Writes follow features/SHOPPING.md §9: only the moved row, or the whole group when it is renumbered. 2026-11-28.
+
+### D24 — Shopping: deleting a section keeps its items (replaces D16)
+The user asked for deleted sections to leave their items uncategorized instead of deleting them. A `before delete` trigger on `shopping_sections` moves the section's items to the end of the top area ("No section"), keeping their order, in the same transaction (so other members get the updates through Realtime); the foreign key now uses `on delete set null (section_id)` as a backstop instead of cascading. The client mirrors this during the undo window (the items show at the end of the top area) and after the delete. 2026-11-28.
 
 ## Still open
 - None.

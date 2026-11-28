@@ -141,14 +141,14 @@ export function useShopping() {
   // Same for sections being created.
   const pendingSections = ref<ShoppingSection[]>([])
 
-  // Deleted sections stay hidden (with their items) during the undo window; the delete runs when it ends.
+  // Deleted sections stay hidden during the undo window and their items show at the end of the top area (D24); the
+  // delete runs when the window ends.
   const hiddenSectionIds = ref(new Set<string>())
   const pendingDeletes = new Map<string, ReturnType<typeof setTimeout>>()
 
   const items = computed((): ShoppingItem[] => {
     const saved = new Set(data.value.items.map(i => i.id))
     return [...data.value.items, ...pendingAdds.value.filter(i => !saved.has(i.id))]
-      .filter(i => i.sectionId === null || !hiddenSectionIds.value.has(i.sectionId))
   })
 
   const sections = computed(() => {
@@ -163,9 +163,12 @@ export function useShopping() {
       const key = item.sectionId
       bySection.set(key, [...(bySection.get(key) ?? []), item])
     }
+    // Items of sections deleted in the undo window follow the top area's own items, as they will after the delete.
+    const released = sortByPosition(data.value.sections.filter(s => hiddenSectionIds.value.has(s.id)))
+      .flatMap(s => sortByPosition(bySection.get(s.id) ?? []))
     const top: ShoppingGroup = {
       section: null,
-      items: sortByPosition(bySection.get(null) ?? []),
+      items: [...sortByPosition(bySection.get(null) ?? []), ...released],
     }
     const rest = sections.value.map(section => ({
       section,
@@ -532,18 +535,38 @@ export function useShopping() {
     hiddenSectionIds.value = next
   }
 
+  /**
+   * Removes a section locally and moves its items to the end of the top area, in order — what the database trigger
+   * does on delete (D24), so the screen matches before the server's updates arrive.
+   */
+  function releaseSectionLocal(id: string) {
+    const end = Math.max(0, ...data.value.items.filter(i => i.sectionId === null).map(i => i.position))
+    const moved = new Map(sortByPosition(data.value.items.filter(i => i.sectionId === id)).map((i, n) => [i.id, end + n + 1]))
+    data.value = {
+      ...data.value,
+      sections: data.value.sections.filter(s => s.id !== id),
+      items: data.value.items.map((i) => {
+        const position = moved.get(i.id)
+        if (position === undefined) {
+          return i
+        }
+        return {
+          ...i,
+          sectionId: null,
+          position,
+        }
+      }),
+    }
+  }
+
   async function deleteSectionNow(id: string) {
     pendingDeletes.delete(id)
-    // Its items go with it (on delete cascade, D16).
+    // Its items stay, moved to the top area by the database trigger (D24).
     const { error: deleteError } = await tracked(supabase.from('shopping_sections').delete().eq('id', id))
     if (deleteError) {
       toast.error('Could not delete the section.')
     } else {
-      data.value = {
-        ...data.value,
-        sections: data.value.sections.filter(s => s.id !== id),
-        items: data.value.items.filter(i => i.sectionId !== id),
-      }
+      releaseSectionLocal(id)
     }
     unhideSection(id)
   }
@@ -556,14 +579,14 @@ export function useShopping() {
   }
 
   /**
-   * Delete with undo (features/SHOPPING.md §10, D16): the section and its items disappear at once; the delete runs
-   * when the undo window ends, so Undo loses nothing.
+   * Delete with undo (features/SHOPPING.md §10, D24): the heading disappears at once and its items move to the end of
+   * the top area ("No section"); the delete runs when the undo window ends, so Undo puts everything back.
    */
   function deleteSection(section: ShoppingSection) {
     const count = items.value.filter(i => i.sectionId === section.id).length
     hiddenSectionIds.value = new Set([...hiddenSectionIds.value, section.id])
     pendingDeletes.set(section.id, setTimeout(() => void deleteSectionNow(section.id), UNDO_TOAST_MS))
-    const what = count === 0 ? '' : count === 1 ? ' and 1 item' : ` and ${count} items`
+    const what = count === 0 ? '' : count === 1 ? '; its item moved to No section' : `; its ${count} items moved to No section`
     toast(`Deleted “${section.name}”${what}`, {
       duration: UNDO_TOAST_MS,
       action: {
@@ -622,12 +645,8 @@ export function useShopping() {
     if (payload.eventType === 'DELETE') {
       const id = payload.old.id
       if (id) {
-        // Its items are deleted by the cascade (their own events follow); drop them now so nothing dangles.
-        data.value = {
-          ...data.value,
-          sections: data.value.sections.filter(s => s.id !== id),
-          items: data.value.items.filter(i => i.sectionId !== id),
-        }
+        // Its items moved to the top area (their update events follow and agree with this).
+        releaseSectionLocal(id)
       }
       return
     }

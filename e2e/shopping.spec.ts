@@ -120,14 +120,16 @@ test('sections: new section becomes the target; ticking removes an item with und
     await expect(page.getByRole('checkbox', { name: 'Got Cucumbers' })).toBeVisible()
     await expect(page.getByRole('checkbox', { name: 'Got Lemons' })).toHaveCount(0)
 
-    // Rename the section; deleting it takes its items, with undo.
+    // Rename the section; deleting it moves its items to the top area (D24), with undo.
     await page.getByRole('button', { name: 'Edit section Produce' }).click()
     await page.getByLabel('Section name', { exact: true }).fill('Fruit & veg')
     await page.getByLabel('Section name', { exact: true }).press('Enter')
     await expect(page.getByRole('heading', { name: 'Fruit & veg', exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Edit section Fruit & veg' }).click()
     await page.getByRole('button', { name: 'Delete section Fruit & veg and its items' }).click()
-    await expect(page.getByText('Deleted “Fruit & veg” and 1 item')).toBeVisible()
+    await expect(page.getByText('Deleted “Fruit & veg”; its item moved to No section')).toBeVisible()
+    // The item stays, in the top area.
+    await expect(page.locator('section[aria-label="Items without a section"]').getByRole('checkbox', { name: 'Got Cucumbers' })).toBeVisible()
     await page.getByRole('button', { name: 'Undo' }).click()
     await expect(page.getByRole('checkbox', { name: 'Got Cucumbers' })).toBeVisible()
   } finally {

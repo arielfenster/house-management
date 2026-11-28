@@ -97,13 +97,26 @@ describe('members share everything', () => {
     expect(data?.id).toBe(id)
   })
 
-  it('deleting a section deletes its items, not the unsectioned ones (D16)', async () => {
+  it('deleting a section keeps its items: they move to the end of the top area, in order (D24)', async () => {
     const section = await addSection(w.a1, w.householdA, listA, 'Bakery')
-    const inSection = await addItem(w.a1, w.householdA, listA, section, 'Bread')
+    const pitas = await addItem(w.a1, w.householdA, listA, section, 'Pitas')
+    const bread = await addItem(w.a1, w.householdA, listA, section, 'Bread')
+    await w.a1.client.from('shopping_items').update({ position: 0.5 }).eq('id', bread)
     const loose = await addItem(w.a1, w.householdA, listA, null, 'Batteries')
-    await w.a2.client.from('shopping_sections').delete().eq('id', section)
-    const { data } = await adminClient().from('shopping_items').select('id').in('id', [inSection, loose])
-    expect(data).toEqual([{ id: loose }])
+    await w.a1.client.from('shopping_items').update({ position: 7 }).eq('id', loose)
+
+    // Deleted by the other member (RLS applies to the trigger's updates too).
+    expect((await w.a2.client.from('shopping_sections').delete().eq('id', section).select()).data).toHaveLength(1)
+    const { data } = await adminClient()
+      .from('shopping_items')
+      .select('id, section_id, position')
+      .in('id', [pitas, bread, loose])
+      .order('position')
+    expect(data).toEqual([
+      { id: loose, section_id: null, position: 7 },
+      { id: bread, section_id: null, position: 8 },
+      { id: pitas, section_id: null, position: 9 },
+    ])
   })
 })
 
