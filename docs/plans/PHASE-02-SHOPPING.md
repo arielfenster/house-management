@@ -1,6 +1,6 @@
 # Phase 2: Shopping
 
-Status: Not Started
+Status: In Progress
 
 ## Goal
 A fast shared shopping list useful in the supermarket.
@@ -12,7 +12,7 @@ Phase 0 done (Phase 1 not required). Q8 decided.
 Shopping tables + RLS, realtime sync, `/shopping` UI.
 
 ## Implementation
-- [ ] SHOP-001: Migration — `shopping_lists`, `shopping_sections`, `shopping_items`, indexes; list created in `create_household` (+ backfill)
+- [x] SHOP-001: Migration — `shopping_lists`, `shopping_sections`, `shopping_items`, indexes; list created in `create_household` (+ backfill)
 - [ ] SHOP-002: RLS + tests (member vs non-member)
 - [ ] SHOP-003: Position utilities (midpoint, rebalance) + unit tests; paste-parsing util + tests
 - [ ] SHOP-004: Page with sections/items rendering, check/uncheck (optimistic)

@@ -80,6 +80,7 @@ Implemented in TASKS-002 (`supabase/migrations/*_tasks.sql`): `(task_id, househo
 - `shopping_items`: `id`, `list_id`, `section_id` null → sections (**cascade** — deleting a section deletes its items, with UI undo toast; alternative considered: move to "no section"), `household_id`, `name` not null, `checked` bool default false, `position` double precision, `created_at`.
 Ordering: fractional `position` (midpoint between neighbours); renormalize a section when gaps get tiny. Concurrent edits: last-write-wins per row; reorder only writes the moved row.
 Index: `(list_id, section_id, position)`.
+Implemented in SHOP-001: names are 1–50 chars (lists, sections) / 1–200 (items); items also have `updated_at`. Consistency of the denormalized columns is enforced by composite foreign keys: sections and items reference `shopping_lists (id, household_id)`, and items reference `shopping_sections (id, list_id)` (so an item's section is always in its own list). `household_id`/`list_id` are immutable (column privileges). Clients may supply `id` on insert (optimistic rows keep their id; realtime echoes match by id). The list is inserted by `private.seed_shopping_list` from `create_household`, existing households were backfilled. Clients cannot insert or delete lists in v1 (only rename).
 
 ### push_subscriptions
 `id`, `user_id` → auth.users (cascade), `endpoint` text unique not null, `p256dh` not null, `auth` not null, `user_agent` null, `created_at`, `last_error_at` null. One row per device. 404/410 from the push service ⇒ row deleted.

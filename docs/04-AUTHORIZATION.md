@@ -29,7 +29,8 @@ Private-task **UI** is deferred (D15), but the policies below are implemented an
 | task_completions | can see parent task | `complete_task` RPC only (security definer, checks task visibility, D21) | none | `uncomplete_task` RPC only (latest completion; can see parent task) |
 | categories/rooms/file_groups | member | member | member | member |
 | files (+storage) | member | member, `uploaded_by=auth.uid()` | member (description/group) | member |
-| shopping_* | member | member | member | member |
+| shopping_lists | member | RPC only (`create_household`) | member (name) | none (v1) |
+| shopping_sections, shopping_items | member | member | member | member |
 | push_subscriptions | own | own | own | own |
 | reminder_log | none | service role | service role | service role |
 

@@ -93,6 +93,72 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"shopping_items": {
+                  Row: {
+                    "checked": boolean,"created_at": string,"household_id": string,"id": string,"list_id": string,"name": string,"position": number,"section_id": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "checked"?: boolean,"created_at"?: string,"household_id": string,"id"?: string,"list_id": string,"name": string,"position": number,"section_id"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "checked"?: boolean,"created_at"?: string,"household_id"?: string,"id"?: string,"list_id"?: string,"name"?: string,"position"?: number,"section_id"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_items_list_id_household_id_fkey"
+      columns: ["list_id","household_id"]
+isOneToOne: false
+      referencedRelation: "shopping_lists"
+      referencedColumns: ["id","household_id"]
+    },{
+      foreignKeyName: "shopping_items_section_id_list_id_fkey"
+      columns: ["section_id","list_id"]
+isOneToOne: false
+      referencedRelation: "shopping_sections"
+      referencedColumns: ["id","list_id"]
+    }
+                  ]
+                },"shopping_lists": {
+                  Row: {
+                    "created_at": string,"household_id": string,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"household_id": string,"id"?: string,"name"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"household_id"?: string,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_lists_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shopping_sections": {
+                  Row: {
+                    "created_at": string,"household_id": string,"id": string,"list_id": string,"name": string,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"household_id": string,"id"?: string,"list_id": string,"name": string,"position": number
+                  }
+                  Update: {
+                    "created_at"?: string,"household_id"?: string,"id"?: string,"list_id"?: string,"name"?: string,"position"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_sections_list_id_household_id_fkey"
+      columns: ["list_id","household_id"]
+isOneToOne: false
+      referencedRelation: "shopping_lists"
+      referencedColumns: ["id","household_id"]
+    }
+                  ]
                 },"task_categories": {
                   Row: {
                     "created_at": string,"household_id": string,"id": string,"name": string
