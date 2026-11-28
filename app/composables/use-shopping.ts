@@ -630,7 +630,46 @@ export function useShopping() {
     }
   }
 
+  // While a drag is in progress SortableJS moves rows in the DOM; re-rendering the list then would break the drag.
+  // Realtime events and refetches wait until it ends (a drag counts as a write in flight for the fetch guard).
+  let dragging = false
+  let heldEvents: (() => void)[] = []
+
+  function whenNotDragging(apply: () => void) {
+    if (dragging) {
+      heldEvents.push(apply)
+    } else {
+      apply()
+    }
+  }
+
+  /** Called by the page when an item or section drag starts and ends (dropped or cancelled). */
+  function setDragging(active: boolean) {
+    if (active === dragging) {
+      return
+    }
+    dragging = active
+    if (active) {
+      writesInFlight++
+      return
+    }
+    const held = heldEvents
+    heldEvents = []
+    for (const apply of held) {
+      apply()
+    }
+    writesInFlight--
+    if (writesInFlight === 0 && refetchAfterWrites) {
+      refetchAfterWrites = false
+      void refresh()
+    }
+  }
+
   function onItemChange(payload: RealtimePostgresChangesPayload<ItemRow>) {
+    if (dragging) {
+      whenNotDragging(() => onItemChange(payload))
+      return
+    }
     if (payload.eventType === 'DELETE') {
       const id = payload.old.id
       if (id) {
@@ -642,6 +681,10 @@ export function useShopping() {
   }
 
   function onSectionChange(payload: RealtimePostgresChangesPayload<SectionRow>) {
+    if (dragging) {
+      whenNotDragging(() => onSectionChange(payload))
+      return
+    }
     if (payload.eventType === 'DELETE') {
       const id = payload.old.id
       if (id) {
@@ -724,5 +767,6 @@ export function useShopping() {
     renameItem,
     moveItem,
     moveSection,
+    setDragging,
   }
 }

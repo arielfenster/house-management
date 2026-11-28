@@ -5,12 +5,13 @@ import * as v from 'valibot'
 import type { ShoppingItem, ShoppingSection } from '~/composables/use-shopping'
 import { SHOPPING_ITEM_NAME_MAX } from '#shared/shopping-paste'
 import { shoppingItemNameSchema } from '#shared/validation/shopping'
+import { isDragClick } from '~/utils/sortable'
 
 // Plain shopping row (features/SHOPPING.md §6): square checkbox + name. Ticking shows the check for a moment,
 // then the row is removed (the page collapses it; D22). The row is one large tick target — in a store that beats
 // precision — so editing has its own pencil at the end, which turns the row into an inline editor
 // (Enter saves, Esc cancels, section picker to move it, delete with Undo). In arrange mode (SHOP-008) the row only
-// shows its name and a drag handle.
+// shows its name and a drag handle. Outside arrange mode the whole row can be dragged too (press and hold on touch).
 const props = defineProps<{
   item: ShoppingItem
   rename: (item: ShoppingItem, name: string) => Promise<boolean>
@@ -36,7 +37,8 @@ const ticking = ref(false)
 const reduceMotion = usePreferredReducedMotion()
 
 function onTick() {
-  if (ticking.value || props.item.pending) {
+  // The click that ends a mouse drag of this row is not a tap.
+  if (ticking.value || props.item.pending || isDragClick()) {
     return
   }
   ticking.value = true
@@ -52,6 +54,9 @@ const input = useTemplateRef<{ $el: HTMLInputElement }>('input')
 const inputId = computed(() => `shopping-item-${props.item.id}`)
 
 async function startEdit() {
+  if (isDragClick()) {
+    return
+  }
   draft.value = props.item.name
   error.value = ''
   editing.value = true
@@ -95,8 +100,9 @@ watch(() => props.arranging, () => {
 
 <template>
   <!-- `hover:` only applies on devices that can hover (Tailwind v4), so phones get no sticky highlight. -->
+  <!-- select-none + no touch callout: a press-and-hold starts a drag (any time, SHOP-008) instead of selecting text. -->
   <li
-    class="overflow-hidden border-b border-foreground/10 bg-card last:border-b-0"
+    class="overflow-hidden border-b border-foreground/10 bg-card select-none last:border-b-0 [-webkit-touch-callout:none]"
     :class="{ 'opacity-60': props.item.pending }"
     :data-id="props.item.id"
     :data-pending="props.item.pending ? '' : undefined"

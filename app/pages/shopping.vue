@@ -27,6 +27,7 @@ const {
   renameItem,
   moveItem,
   moveSection,
+  setDragging,
 } = useShopping()
 
 // Section new items go to ('' = none), remembered on this device. Read after mount so the server-rendered select
@@ -66,11 +67,15 @@ function onSectionDrop(move: SortableMove) {
   }
 }
 
+// Items can be dragged any time, by the whole row (SHOP-008): on touch after a short press-and-hold, so a tap still
+// ticks and a swipe still scrolls; with a mouse after a few pixels of movement. In arrange mode the press is instant.
 const itemSortable = computed(() => ({
   group: 'shopping-items',
-  handle: '.drag-handle',
-  disabled: !arranging.value,
+  disabled: false,
+  touchDelay: arranging.value ? 0 : 250,
   onMove: onItemDrop,
+  onDragStart: () => setDragging(true),
+  onDragEnd: () => setDragging(false),
 }))
 
 const sectionSortable = computed(() => ({
@@ -78,6 +83,8 @@ const sectionSortable = computed(() => ({
   handle: '.section-drag-handle',
   disabled: !arranging.value,
   onMove: onSectionDrop,
+  onDragStart: () => setDragging(true),
+  onDragEnd: () => setDragging(false),
 }))
 
 // A ticked row collapses its height instead of vanishing, so the rows below slide up rather than jump.
@@ -128,7 +135,7 @@ const loading = initialLoading
       <ShoppingAddBar v-model:target="addTarget" :sections="savedSections" :add="addItems" />
     </div>
     <p v-else class="mb-3 text-sm text-muted-foreground">
-      Drag the handles to reorder items and sections, or to move an item to another section.
+      Drag the handles to reorder sections and items. Items can also be dragged any time: press and hold on a phone.
     </p>
 
     <!-- At the top, above the list. New sections become the add target, so the next items typed go straight in. -->
@@ -160,11 +167,12 @@ const loading = initialLoading
 
     <!-- One bordered box; sections are small headings inside it (docs/05: separators, not cards). -->
     <div v-else :key="listVersion" class="overflow-hidden rounded-lg border border-foreground/20 bg-card shadow-xs">
-      <!-- Top area (no section). Always a drop target while arranging. -->
+      <!-- Top area (no section). Its list is always mounted, so an item can be dropped there even when it is empty
+           (an empty list takes drops near it; nothing changes layout when a drag starts). Shown as a labelled area
+           while arranging. -->
       <section
-        v-if="topGroup.items.length || arranging"
         aria-label="Items without a section"
-        class="border-b border-foreground/10 last:border-b-0"
+        :class="{ 'border-b border-foreground/10 last:border-b-0': topGroup.items.length || arranging }"
       >
         <p v-if="arranging" class="border-b border-foreground/10 bg-muted/50 px-3 pt-3 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           No section
@@ -189,7 +197,7 @@ const loading = initialLoading
             @move="moveItem(item, $event)"
           />
         </TransitionGroup>
-        <ShoppingInlineAdd v-if="!arranging" :section-id="null" section-name="No section" :add="addItems" />
+        <ShoppingInlineAdd v-if="!arranging && topGroup.items.length" :section-id="null" section-name="No section" :add="addItems" />
       </section>
 
       <!-- Sections, reorderable among themselves (never above the top area). -->

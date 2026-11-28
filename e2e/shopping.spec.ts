@@ -31,6 +31,9 @@ async function openShopping(page: Page) {
  * and release; Playwright's one-shot `dragTo` can skip them and make the test flaky.
  */
 async function drag(page: Page, handle: Locator, target: Locator, offsetY: number) {
+  // Like a person: start once the list has settled (no rows still being saved, their echoes applied).
+  await expect(page.locator('li[data-pending]')).toHaveCount(0)
+  await page.waitForTimeout(300)
   const from = await handle.boundingBox()
   const to = await target.boundingBox()
   if (!from || !to) {
@@ -38,8 +41,14 @@ async function drag(page: Page, handle: Locator, target: Locator, offsetY: numbe
   }
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
   await page.mouse.down()
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2 + 5, { steps: 3 })
-  await page.mouse.move(to.x + 40, to.y + offsetY, { steps: 15 })
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2 + 6, { steps: 3 })
+  await page.waitForTimeout(100)
+  await page.mouse.move(to.x + 40, to.y + offsetY, { steps: 30 })
+  // SortableJS (pointer mode) checks what is under the pointer on a 50 ms timer, not on every move: stay over the
+  // target long enough for it to place the row, as a person would, before letting go.
+  await page.waitForTimeout(200)
+  await page.mouse.move(to.x + 41, to.y + offsetY)
+  await page.waitForTimeout(100)
   await page.mouse.up()
 }
 
@@ -131,7 +140,9 @@ test('sections: new section becomes the target; ticking removes an item with und
     // The item stays, in the top area.
     await expect(page.locator('section[aria-label="Items without a section"]').getByRole('checkbox', { name: 'Got Cucumbers' })).toBeVisible()
     await page.getByRole('button', { name: 'Undo' }).click()
-    await expect(page.getByRole('checkbox', { name: 'Got Cucumbers' })).toBeVisible()
+    // Back in its section (the top-area copy collapses out for a moment, so wait for a single match).
+    await expect(page.getByRole('checkbox', { name: 'Got Cucumbers' })).toHaveCount(1)
+    await expect(itemsOf(page, 'Fruit & veg')).toHaveText(['Cucumbers'])
   } finally {
     await deleteUser(user.email)
   }
@@ -156,6 +167,8 @@ test('items: rename, move to a section and delete from the editor', async ({ pag
     await page.getByRole('button', { name: 'Edit Milk 1%' }).click()
     await page.getByRole('listitem').getByLabel('Section').selectOption({ label: 'Dairy' })
     await expect(itemsOf(page, 'Dairy')).toHaveText(['Milk 1%'])
+    // The old row collapses out of the top area for a moment.
+    await expect(page.getByRole('checkbox', { name: 'Got Milk 1%' })).toHaveCount(1)
 
     await page.reload()
     await expect(itemsOf(page, 'Dairy')).toHaveText(['Milk 1%'])
@@ -294,6 +307,50 @@ test('"+ Add an item" adds inside a section: Enter keeps focus, paste adds every
 
     await page.reload()
     await expect(itemsOf(page, 'Produce')).toHaveText(['Tomatoes', 'Cucumbers', 'Lemons', 'Parsley'])
+  } finally {
+    await deleteUser(user.email)
+  }
+})
+
+test('items can be dragged without arrange mode, also to an empty top area, and the drag does not tick them', async ({ page }, testInfo) => {
+  // Touch uses a press-and-hold (checked by hand on a phone); Playwright drives the mouse path.
+  test.skip(testInfo.project.name === 'mobile', 'drag is exercised with a mouse on desktop')
+  const user = newUser('shop-drag-any')
+  try {
+    await signUpWithHousehold(page, user)
+    await openShopping(page)
+    await createSection(page, 'Produce')
+    for (const name of ['Tomatoes', 'Lemons']) {
+      await addInput(page).fill(name)
+      await addInput(page).press('Enter')
+    }
+    await createSection(page, 'Dairy')
+    await addInput(page).fill('Milk')
+    await addInput(page).press('Enter')
+    await expect(itemsOf(page, 'Dairy')).toHaveText(['Milk'])
+
+    // Lemons from Produce into Dairy, dragged by the row itself (which side of Milk it lands on depends on the
+    // pointer's path; the exact slot within a section is covered by the arrange-mode test).
+    const lemons = page.getByRole('checkbox', { name: 'Got Lemons' })
+    await drag(page, lemons, page.locator('li[data-id]', { hasText: 'Milk' }), 22)
+    await expect(itemsOf(page, 'Dairy')).toHaveCount(2)
+    await expect(itemsOf(page, 'Dairy').filter({ hasText: 'Lemons' })).toHaveCount(1)
+    await expect(itemsOf(page, 'Produce')).toHaveText(['Tomatoes'])
+    const dairyOrder = await itemsOf(page, 'Dairy').allTextContents()
+    await expect(page.getByText('✓ Lemons')).toHaveCount(0)
+
+    // The empty top area (an empty list above the sections) takes drops close to it.
+    await drag(page, page.getByRole('checkbox', { name: 'Got Tomatoes' }), page.locator('section[aria-label="Items without a section"] ul'), 1)
+    await expect(itemsOf(page, 'Produce')).toHaveCount(0)
+    await expect(page.locator('section[aria-label="Items without a section"] li[data-id]')).toHaveText(['Tomatoes'])
+
+    // A plain click still ticks.
+    await page.waitForTimeout(500)
+    await page.getByRole('checkbox', { name: 'Got Tomatoes' }).click()
+    await expect(page.getByText('✓ Tomatoes')).toBeVisible()
+
+    await page.reload()
+    await expect(itemsOf(page, 'Dairy')).toHaveText(dairyOrder.map(t => t.trim()))
   } finally {
     await deleteUser(user.email)
   }
