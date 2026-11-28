@@ -47,7 +47,7 @@ const meta = computed(() => {
     props.task.roomName ? { key: 'room', icon: DoorOpenIcon, label: 'Room', text: props.task.roomName } : null,
   ]
   return items.filter(item => item !== null)
-})
+}) as unknown as MetaItem[];
 
 const TONE_CLASS: Record<DueTone, string> = {
   overdue: 'font-medium text-amber-700 dark:text-amber-400',
