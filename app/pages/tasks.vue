@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ListChecksIcon, ListFilterIcon, SearchIcon } from '@lucide/vue'
+import { ListChecksIcon, SearchIcon, SlidersHorizontalIcon } from '@lucide/vue'
 import type { TaskListItem } from '~/composables/use-tasks'
 import { activeFacetCount, countByStatus, filterTasks, matchesFacets } from '#shared/task-filter'
 import { doneLabel } from '#shared/task-list'
@@ -114,6 +114,7 @@ async function onListsChanged() {
           variant="ghost"
           size="icon"
           aria-label="Search"
+          title="Search"
           :aria-pressed="searchOpen"
           :class="{ 'bg-muted': searchOpen }"
           @click="searchOpen = !searchOpen"
@@ -125,11 +126,12 @@ async function onListsChanged() {
           size="icon"
           class="relative"
           :aria-label="facetCount ? `Filters (${facetCount} active)` : 'Filters'"
+          title="Filters"
           :aria-pressed="filtersOpen"
           :class="{ 'bg-muted': filtersOpen }"
           @click="filtersOpen = !filtersOpen"
         >
-          <ListFilterIcon />
+          <SlidersHorizontalIcon />
           <span
             v-if="facetCount"
             class="absolute -end-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"

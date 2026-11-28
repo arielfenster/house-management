@@ -16,7 +16,7 @@ function row(page: Page, title: string) {
 
 async function openNewTaskForm(page: Page, title: string) {
   await page.getByLabel('New task').fill(title)
-  await page.getByRole('button', { name: 'More options' }).click()
+  await page.getByRole('button', { name: 'Add with details' }).click()
   return page.getByRole('dialog', { name: 'New task' })
 }
 
@@ -69,7 +69,8 @@ test('custom category and room inline, then filter, search and rename', async ({
     await expect(sheet.getByRole('button', { name: /^Room/ })).toContainText('Yard')
     await sheet.getByRole('button', { name: 'Add task' }).click()
     await expect(sheet).toBeHidden()
-    await expect(row(page, 'Prune the lemon tree')).toContainText('Garden · Yard')
+    await expect(row(page, 'Prune the lemon tree')).toContainText('Category:Garden')
+    await expect(row(page, 'Prune the lemon tree')).toContainText('Room:Yard')
 
     // A second task in another (default) category.
     await page.getByLabel('New task').fill('Descale the kettle')
@@ -102,7 +103,7 @@ test('custom category and room inline, then filter, search and rename', async ({
     await page.keyboard.press('Escape')
     await page.keyboard.press('Escape')
     await expect(edit).toBeHidden()
-    await expect(row(page, 'Prune the lemon tree')).toContainText('Garden & yard · Yard')
+    await expect(row(page, 'Prune the lemon tree')).toContainText('Category:Garden & yard')
   } finally {
     await deleteUser(user.email)
   }

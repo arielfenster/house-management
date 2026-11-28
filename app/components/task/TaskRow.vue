@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { CheckIcon, RepeatIcon } from '@lucide/vue'
+import type { Component } from 'vue'
+import { CheckIcon, DoorOpenIcon, RepeatIcon, TagIcon, UserRoundIcon } from '@lucide/vue'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import type { TaskListItem } from '~/composables/use-tasks'
 import { describeRecurrence, dueLabel, type DueTone } from '#shared/task-list'
 
-// Compact task row (features/TASKS.md §6): check circle, title, muted meta, due label.
+// Compact task row (features/TASKS.md §6): check circle, title, meta (icon + text each), due label.
 const props = defineProps<{
   task: TaskListItem
   today: string
@@ -29,8 +30,24 @@ const recurrence = computed(() =>
     ? describeRecurrence(props.task.recurrenceUnit, props.task.recurrenceInterval)
     : null,
 )
-const place = computed(() => [props.task.categoryName, props.task.roomName].filter(Boolean).join(' · '))
-const meta = computed(() => [recurrence.value, place.value, props.assigneeName].filter(Boolean))
+interface MetaItem {
+  key: string
+  icon: Component
+  /** Read before the value by screen readers ("Category: Maintenance"). */
+  label: string
+  text: string
+}
+
+// Recurrence, assignee, category, room — each with its own icon so they read apart at a glance.
+const meta = computed(() => {
+  const items: (MetaItem | null)[] = [
+    recurrence.value ? { key: 'recurrence', icon: RepeatIcon, label: 'Repeats', text: recurrence.value } : null,
+    props.assigneeName ? { key: 'assignee', icon: UserRoundIcon, label: 'Assigned to', text: props.assigneeName } : null,
+    props.task.categoryName ? { key: 'category', icon: TagIcon, label: 'Category', text: props.task.categoryName } : null,
+    props.task.roomName ? { key: 'room', icon: DoorOpenIcon, label: 'Room', text: props.task.roomName } : null,
+  ]
+  return items.filter(item => item !== null)
+})
 
 const TONE_CLASS: Record<DueTone, string> = {
   overdue: 'font-medium text-amber-700 dark:text-amber-400',
@@ -96,17 +113,18 @@ function onCheck() {
         <span class="block truncate text-start text-sm" dir="auto" :class="{ 'text-muted-foreground line-through': checked }">
           {{ props.task.title }}
         </span>
-        <span v-if="meta.length" class="block truncate text-start text-xs text-muted-foreground">
-          <template v-for="(part, i) in meta" :key="i">
-            <span v-if="i > 0" aria-hidden="true"> · </span>
-            <span dir="auto">{{ part }}</span>
-          </template>
+        <!-- Wraps to a second line on narrow screens rather than cutting values off. -->
+        <span v-if="meta.length" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span v-for="item in meta" :key="item.key" class="inline-flex min-w-0 max-w-full items-center gap-1" :title="item.label">
+            <component :is="item.icon" class="size-3.5 shrink-0" aria-hidden="true" />
+            <span class="sr-only">{{ item.label }}:</span>
+            <span class="truncate" dir="auto">{{ item.text }}</span>
+          </span>
         </span>
       </span>
 
       <span v-if="props.doneText" class="shrink-0 ps-2 text-xs text-muted-foreground">{{ props.doneText }}</span>
-      <span v-if="due" class="flex shrink-0 items-center gap-1 ps-2 text-xs" :class="TONE_CLASS[due.tone]" :title="due.description">
-        <RepeatIcon v-if="props.task.kind === 'recurring'" class="size-3 opacity-70" aria-hidden="true" />
+      <span v-if="due" class="shrink-0 ps-2 text-xs" :class="TONE_CLASS[due.tone]" :title="due.description">
         <span aria-hidden="true">{{ due.text }}</span>
         <span class="sr-only">{{ due.description }}</span>
       </span>

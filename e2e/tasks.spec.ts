@@ -47,9 +47,9 @@ test('create, edit and delete a task with the form', async ({ page }, testInfo) 
   try {
     await signUpWithHousehold(page, user)
 
-    // "More options" carries over what was typed.
+    // "Add with details" carries over what was typed.
     await page.getByLabel('New task').fill('Clean AC filters')
-    await page.getByRole('button', { name: 'More options' }).click()
+    await page.getByRole('button', { name: 'Add with details' }).click()
     const sheet = page.getByRole('dialog', { name: 'New task' })
     await expect(sheet.getByLabel('Title')).toHaveValue('Clean AC filters')
 

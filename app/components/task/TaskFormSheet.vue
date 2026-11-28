@@ -19,7 +19,7 @@ import {
 const props = defineProps<{
   /** The task being edited; null creates a new one. */
   task: TaskListItem | null
-  /** Pre-filled title when opened from quick add ("More options"). */
+  /** Pre-filled title when opened from quick add ("Add with details"). */
   initialTitle?: string
   members: HouseholdMember[]
   /** Today in the household timezone (`YYYY-MM-DD`). */
