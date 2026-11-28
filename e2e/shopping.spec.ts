@@ -4,11 +4,11 @@ import { signUpAndJoin, signUpWithHousehold, waitForHydration } from './support/
 import { deleteUser, inviteCodeOf, newUser } from './support/users'
 
 // SHOP-010: the shopping list end to end, on the phone and desktop projects: rapid entry and multi-line paste,
-// sections with tick-off + undo (D22), inline edit/delete, two members in sync (realtime), reorder (desktop drag)
+// sections with tick-off + undo (D22), inline edit/delete, "+ Add an item" per section (SHOP-008a), two members in sync (realtime), reorder (desktop drag)
 // and a phone layout check.
 
 function addInput(page: Page) {
-  return page.getByLabel('Add an item')
+  return page.getByLabel('Add an item', { exact: true })
 }
 
 /** Item names in display order, per list: top area first, then sections in order. */
@@ -254,6 +254,44 @@ test('phone layout: no sideways scroll, add bar stays in view, 44 px rows', asyn
 
     const rowHeight = await page.locator('li[data-id]').first().evaluate(el => el.getBoundingClientRect().height)
     expect(rowHeight).toBeGreaterThanOrEqual(44)
+  } finally {
+    await deleteUser(user.email)
+  }
+})
+
+test('"+ Add an item" adds inside a section: Enter keeps focus, paste adds every line', async ({ page }, testInfo) => {
+  const user = newUser(`shop-inline-${testInfo.project.name}`)
+  try {
+    await signUpWithHousehold(page, user)
+    await openShopping(page)
+    await createSection(page, 'Produce')
+    await createSection(page, 'Dairy')
+    // The add bar now targets Dairy; the inline row adds to its own section regardless.
+    await page.getByRole('button', { name: 'Add an item to Produce' }).click()
+    const input = page.getByLabel('New item in Produce')
+    await input.pressSequentially('Tomatoes')
+    await input.press('Enter')
+    await input.pressSequentially('Cucumbers')
+    await input.press('Enter')
+    await expect(input).toBeFocused()
+    await expect(itemsOf(page, 'Produce')).toHaveText(['Tomatoes', 'Cucumbers'])
+
+    await input.evaluate((el) => {
+      const data = new DataTransfer()
+      data.setData('text/plain', '- Lemons\n\n• Parsley')
+      el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
+    })
+    await expect(itemsOf(page, 'Produce')).toHaveText(['Tomatoes', 'Cucumbers', 'Lemons', 'Parsley'])
+    await expect(itemsOf(page, 'Dairy')).toHaveCount(0)
+
+    await input.press('Escape')
+    await expect(page.getByRole('button', { name: 'Add an item to Produce' })).toBeVisible()
+    await page.getByRole('button', { name: 'Arrange' }).click()
+    await expect(page.getByRole('button', { name: 'Add an item to Produce' })).toBeHidden()
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    await page.reload()
+    await expect(itemsOf(page, 'Produce')).toHaveText(['Tomatoes', 'Cucumbers', 'Lemons', 'Parsley'])
   } finally {
     await deleteUser(user.email)
   }

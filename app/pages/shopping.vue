@@ -7,7 +7,8 @@ import { vSortable, type SortableMove } from '~/utils/sortable'
 // Shopping (features/SHOPPING.md): the household's list — items without a section on top, then each section
 // under a small heading. One tap ticks an item off: it leaves the list and is deleted, with Undo (D22). Fast entry
 // bar kept in view at the top (SHOP-005); sections created, renamed and deleted (with undo) inline (SHOP-006);
-// items renamed, moved to another section or deleted from their pencil (SHOP-007/008).
+// items renamed, moved to another section or deleted from their pencil (SHOP-007/008); "+ Add an item" at the end of
+// each section adds right there (SHOP-008a).
 // Arrange mode (SHOP-008): drag handles reorder items (also across sections) and sections. Realtime: SHOP-009.
 const {
   groups,
@@ -179,6 +180,7 @@ const loading = initialLoading
             @move="moveItem(item, $event)"
           />
         </TransitionGroup>
+        <ShoppingInlineAdd v-if="!arranging" :section-id="null" section-name="No section" :add="addItems" />
       </section>
 
       <!-- Sections, reorderable among themselves (never above the top area). -->
@@ -221,6 +223,13 @@ const loading = initialLoading
           <p v-if="!group.items.length && !arranging" class="px-3 py-2.5 text-xs text-muted-foreground">
             No items
           </p>
+          <!-- A section still being saved cannot take items yet (foreign key). -->
+          <ShoppingInlineAdd
+            v-if="!arranging && !group.section!.pending"
+            :section-id="group.section!.id"
+            :section-name="group.section!.name"
+            :add="addItems"
+          />
         </section>
       </div>
     </div>
