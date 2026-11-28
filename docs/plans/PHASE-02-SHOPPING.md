@@ -14,7 +14,7 @@ Shopping tables + RLS, realtime sync, `/shopping` UI.
 ## Implementation
 - [x] SHOP-001: Migration — `shopping_lists`, `shopping_sections`, `shopping_items`, indexes; list created in `create_household` (+ backfill)
 - [x] SHOP-002: RLS + tests (member vs non-member)
-- [ ] SHOP-003: Position utilities (midpoint, rebalance) + unit tests; paste-parsing util + tests
+- [x] SHOP-003: Position utilities (midpoint, rebalance) + unit tests; paste-parsing util + tests
 - [ ] SHOP-004: Page with sections/items rendering, check/uncheck (optimistic)
 - [ ] SHOP-005: Fast-entry input (Enter adds, stays focused, target section, multi-line paste)
 - [ ] SHOP-006: Section create/rename/delete (undo)
