@@ -52,9 +52,17 @@ export function useShopping() {
   const { membership } = useMembership()
   const householdId = computed(() => membership.value?.householdId ?? null)
 
+  // Writes in flight, and a counter of writes started. A fetch that overlaps a write may return the state from before
+  // it and would undo the optimistic change on screen; such a fetch keeps the current state and runs again once the
+  // writes have settled.
+  let writesInFlight = 0
+  let writesStarted = 0
+  let refetchAfterWrites = false
+
   const { data, pending, error, refresh } = useAsyncData(
     'shopping',
     async (): Promise<ShoppingData> => {
+      const startedAt = writesStarted
       if (!householdId.value) {
         return {
           listId: null,
@@ -86,6 +94,10 @@ export function useShopping() {
       if (sections.error || items.error) {
         throw createError({ statusCode: 500, statusMessage: 'Could not load the shopping list.' })
       }
+      if (writesInFlight > 0 || writesStarted !== startedAt) {
+        refetchAfterWrites = true
+        return data.value
+      }
       return {
         listId: list.id,
         sections: sections.data,
@@ -106,6 +118,21 @@ export function useShopping() {
       }),
     },
   )
+
+  /** Runs a write, counted for the fetch guard above; refetches afterwards if a fetch was skipped meanwhile. */
+  async function tracked<T>(query: PromiseLike<T>): Promise<T> {
+    writesInFlight++
+    writesStarted++
+    try {
+      return await query
+    } finally {
+      writesInFlight--
+      if (writesInFlight === 0 && refetchAfterWrites) {
+        refetchAfterWrites = false
+        void refresh()
+      }
+    }
+  }
 
   // Added rows waiting for their insert. Kept apart from `data` so a fetch that lands meanwhile cannot drop them;
   // they carry their final id (generated here), so once the fetch has them the copy here is ignored.
@@ -148,6 +175,9 @@ export function useShopping() {
   })
 
   const isEmpty = computed(() => items.value.length === 0 && sections.value.length === 0)
+  // Only the first load shows a loading state: later refetches (focus, realtime resubscribe) keep the list on screen,
+  // or an empty list would flash a skeleton and unmount whatever form was open. The list id is known once loaded.
+  const initialLoading = computed(() => pending.value && data.value.listId === null)
   const remaining = computed(() => items.value.length)
 
   function removeLocal(id: string) {
@@ -168,7 +198,7 @@ export function useShopping() {
   let lastDone: { item: ShoppingItem, deleted: Promise<boolean> } | null = null
 
   async function deleteItemRow(item: ShoppingItem): Promise<boolean> {
-    const { error: deleteError } = await supabase.from('shopping_items').delete().eq('id', item.id)
+    const { error: deleteError } = await tracked(supabase.from('shopping_items').delete().eq('id', item.id))
     if (deleteError) {
       restoreLocal(item)
       // The row is back, so its Undo toast has nothing to undo.
@@ -198,14 +228,14 @@ export function useShopping() {
       sectionId,
     }
     restoreLocal(item)
-    const { error: insertError } = await supabase.from('shopping_items').insert({
+    const { error: insertError } = await tracked(supabase.from('shopping_items').insert({
       id: item.id,
       list_id: data.value.listId,
       household_id: householdId.value,
       section_id: item.sectionId,
       name: item.name,
       position: item.position,
-    })
+    }))
     if (insertError) {
       removeLocal(item.id)
       toast.error(`Could not bring back “${item.name}”.`)
@@ -259,9 +289,9 @@ export function useShopping() {
     // Normally a single row; a renumbered group (rare) writes each of its rows.
     const results = await Promise.all(updates.map((u) => {
       if (table === 'shopping_items' && moved && u.id === moved.id) {
-        return supabase.from('shopping_items').update({ position: u.position, section_id: moved.sectionId }).eq('id', u.id)
+        return tracked(supabase.from('shopping_items').update({ position: u.position, section_id: moved.sectionId }).eq('id', u.id))
       }
-      return supabase.from(table).update({ position: u.position }).eq('id', u.id)
+      return tracked(supabase.from(table).update({ position: u.position }).eq('id', u.id))
     }))
     return results.every(r => !r.error)
   }
@@ -348,11 +378,11 @@ export function useShopping() {
       ...item,
       name,
     })
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await tracked(supabase
       .from('shopping_items')
       .update({ name })
       .eq('id', item.id)
-      .select('id')
+      .select('id'))
     if (updateError) {
       restoreLocal(item)
       toast.error('Could not rename the item. Please try again.')
@@ -391,14 +421,14 @@ export function useShopping() {
     })
     pendingAdds.value = [...pendingAdds.value, ...added]
 
-    const { error: insertError } = await supabase.from('shopping_items').insert(added.map(item => ({
+    const { error: insertError } = await tracked(supabase.from('shopping_items').insert(added.map(item => ({
       id: item.id,
       list_id: listId,
       household_id: householdId.value!,
       section_id: item.sectionId,
       name: item.name,
       position: item.position,
-    })))
+    }))))
 
     const ids = new Set(added.map(i => i.id))
     pendingAdds.value = pendingAdds.value.filter(i => !ids.has(i.id))
@@ -444,13 +474,13 @@ export function useShopping() {
       pending: true,
     }
     pendingSections.value = [...pendingSections.value, section]
-    const { error: insertError } = await supabase.from('shopping_sections').insert({
+    const { error: insertError } = await tracked(supabase.from('shopping_sections').insert({
       id: section.id,
       list_id: listId,
       household_id: householdId.value,
       name: section.name,
       position: section.position,
-    })
+    }))
     pendingSections.value = pendingSections.value.filter(s => s.id !== section.id)
     if (insertError) {
       toast.error(`Could not add the “${name}” section. Please try again.`)
@@ -487,7 +517,7 @@ export function useShopping() {
       return true
     }
     patchSection(section.id, { name })
-    const { error: updateError } = await supabase.from('shopping_sections').update({ name }).eq('id', section.id)
+    const { error: updateError } = await tracked(supabase.from('shopping_sections').update({ name }).eq('id', section.id))
     if (updateError) {
       patchSection(section.id, { name: section.name })
       toast.error('Could not rename the section. Please try again.')
@@ -505,7 +535,7 @@ export function useShopping() {
   async function deleteSectionNow(id: string) {
     pendingDeletes.delete(id)
     // Its items go with it (on delete cascade, D16).
-    const { error: deleteError } = await supabase.from('shopping_sections').delete().eq('id', id)
+    const { error: deleteError } = await tracked(supabase.from('shopping_sections').delete().eq('id', id))
     if (deleteError) {
       toast.error('Could not delete the section.')
     } else {
@@ -604,8 +634,6 @@ export function useShopping() {
     upsertSectionFromRow(payload.new)
   }
 
-  /** Whether the channel was subscribed before: a later SUBSCRIBED is a reconnect, and events may have been missed. */
-  let wasSubscribed = false
   let channel: RealtimeChannel | null = null
 
   function unsubscribe() {
@@ -617,7 +645,6 @@ export function useShopping() {
 
   function subscribe(listId: string) {
     unsubscribe()
-    wasSubscribed = false
     const filter = `list_id=eq.${listId}`
     channel = supabase
       .channel(`shopping:${listId}`)
@@ -629,11 +656,10 @@ export function useShopping() {
       .on<SectionRow>('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'shopping_sections', filter }, onSectionChange)
       .on<SectionRow>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'shopping_sections' }, onSectionChange)
       .subscribe((status) => {
+        // Refetch on every (re)subscribe: changes made between the page's first load and the subscription, or while
+        // disconnected, produced no events for us.
         if (status === 'SUBSCRIBED') {
-          if (wasSubscribed) {
-            void refresh()
-          }
-          wasSubscribed = true
+          void refresh()
         }
       })
   }
@@ -669,6 +695,7 @@ export function useShopping() {
     renameSection,
     deleteSection,
     isEmpty,
+    initialLoading,
     remaining,
     pending,
     error,

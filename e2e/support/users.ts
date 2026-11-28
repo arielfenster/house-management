@@ -35,3 +35,19 @@ export async function deleteUser(email: string): Promise<void> {
   }
   await admin.auth.admin.deleteUser(user.id)
 }
+
+/** Invite code of the household `email` belongs to (read with the service role). */
+export async function inviteCodeOf(email: string): Promise<string> {
+  const admin = adminClient()
+  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  const user = data?.users.find(u => u.email === email)
+  if (error || !user) {
+    throw new Error(`inviteCodeOf: user not found (${error?.message ?? email})`)
+  }
+  const { data: membership } = await admin.from('household_members').select('households(invite_code)').eq('user_id', user.id).single()
+  const code = membership?.households?.invite_code
+  if (!code) {
+    throw new Error('inviteCodeOf: no household')
+  }
+  return code
+}

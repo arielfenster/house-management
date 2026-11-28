@@ -46,8 +46,12 @@ function create(el: HTMLElement): Sortable {
     filter: '[data-pending]',
     preventOnFilter: false,
     ghostClass: 'opacity-40',
-    // Touch: the handle starts the drag at once (it is a dedicated target), the rest of the row scrolls.
+    // Pointer-event dragging everywhere instead of native HTML5 drag-and-drop: touch already uses it, desktop
+    // browsers then behave the same, and it is what automated tests can drive reliably.
+    forceFallback: true,
     fallbackOnBody: true,
+    // A few pixels of movement before a drag starts, so a tap on the handle is not a drag.
+    fallbackTolerance: 3,
     onEnd: (evt) => {
       const binding = bindings.get(el)
       const id = evt.item.dataset.id

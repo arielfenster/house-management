@@ -22,7 +22,7 @@ Shopping tables + RLS, realtime sync, `/shopping` UI.
 - [x] SHOP-008: Reorder items/sections and move between sections
 - [ ] SHOP-008a: Inline "+ Add an item" row at the end of each section (and the top area): tap → input in place; Enter adds to the end of that section and keeps focus; multi-line paste adds all lines there; Esc / empty blur closes. Functionality only — keep current styling; hidden in reorder mode
 - [x] SHOP-009: Realtime subscription + refetch-on-focus; reconcile own echoes
-- [ ] SHOP-010: Playwright (rapid entry, two-context sync) + mobile check
+- [x] SHOP-010: Playwright (rapid entry, two-context sync) + mobile check
 - [ ] SHOP-011: Deploy
 
 ## Acceptance Criteria

@@ -17,8 +17,8 @@ const {
   renameSection,
   deleteSection,
   isEmpty,
+  initialLoading,
   remaining,
-  pending,
   error,
   refresh,
   completeItem,
@@ -98,7 +98,7 @@ function collapse(el: Element, done: () => void) {
   animation.oncancel = done
 }
 
-const loading = computed(() => pending.value && isEmpty.value)
+const loading = initialLoading
 </script>
 
 <template>
