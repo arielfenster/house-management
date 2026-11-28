@@ -20,14 +20,15 @@ const accountOpen = useAccountSheetOpen()
     </h1>
     <slot name="actions" />
     <!-- Desktop opens the account sheet from the sidebar. -->
+    <!-- 44 px touch target, 24 px icon. -->
     <Button
       variant="ghost"
       size="icon"
-      class="md:hidden"
+      class="-me-1.5 size-11 md:hidden"
       aria-label="Household and account"
       @click="accountOpen = true"
     >
-      <CircleUserRoundIcon />
+      <CircleUserRoundIcon class="size-6" />
     </Button>
   </header>
 </template>

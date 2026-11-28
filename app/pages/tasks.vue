@@ -4,7 +4,7 @@ import type { TaskListItem } from '~/composables/use-tasks'
 import { countByStatus, filterTasks, matchesFacets } from '#shared/task-filter'
 import { doneLabel } from '#shared/task-list'
 
-// Tasks: "New task" (full form) in the header, quick add, search + Filters sheet + status tabs (TASKS-009),
+// Tasks: "New task" (full form; header on desktop, floating button on phones), quick add, search + Filters sheet + status tabs (TASKS-009),
 // open tasks sorted overdue → soonest → undated, one-tap completion with undo (TASKS-006),
 // create/edit/delete sheet (TASKS-007/008) with history (TASKS-010).
 const {
@@ -112,10 +112,12 @@ async function onListsChanged() {
 </script>
 
 <template>
-  <div>
+  <div class="pb-20 md:pb-0">
+    <!-- pb-20 (phones): room under the list for the floating "New task" button. -->
     <PageHeader title="Tasks">
       <template #actions>
-        <Button size="sm" @click="openNew">
+        <!-- Desktop: in the header. Phones use the floating button below (thumb reach, away from the account icon). -->
+        <Button size="sm" class="hidden md:inline-flex" @click="openNew">
           <PlusIcon />
           New task
         </Button>
@@ -182,6 +184,15 @@ async function onListsChanged() {
       @delete="deleteTask"
       @lists-changed="onListsChanged"
     />
+
+    <!-- Phones: floating "New task" button, bottom right just above the nav bar. -->
+    <Button
+      class="fixed end-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] z-30 h-14 gap-2 rounded-full px-5 text-base shadow-lg md:hidden"
+      @click="openNew"
+    >
+      <PlusIcon class="size-5" />
+      New task
+    </Button>
 
     <TaskFiltersSheet
       v-model:open="filtersOpen"
