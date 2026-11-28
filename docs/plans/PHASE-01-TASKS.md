@@ -1,6 +1,6 @@
 # Phase 1: Tasks
 
-Status: In Progress
+Status: Implemented and deployed (2026-11-28); manual phone check pending
 
 ## Goal
 Make household task management usable daily.
@@ -23,19 +23,22 @@ Tasks tables + RLS, categories/rooms, recurrence module, completion RPC, `/tasks
 - [x] TASKS-009: Filters (All/Upcoming/Overdue/Completed + category/room/type) and search
 - [x] TASKS-010: Detail view: last completion (`last_completed_at`) + completion history
 - [x] TASKS-011: Playwright e2e (create, complete recurring, custom category) + mobile viewport check
-- [ ] TASKS-012: Deploy
+- [x] TASKS-012: Deploy
 
 ## Acceptance Criteria
-- [ ] One-time tasks work
-- [ ] Recurring tasks advance correctly per policy
-- [ ] Last completion and history viewable
-- [ ] Custom categories and rooms work inline
-- [ ] Shared tasks work for both users; private-task authorization verified at DB level (no UI)
+- [x] One-time tasks work
+- [x] Recurring tasks advance correctly per policy
+- [x] Last completion and history viewable
+- [x] Custom categories and rooms work inline
+- [x] Shared tasks work for both users; private-task authorization verified at DB level (no UI)
 - [ ] Mobile experience efficient
-- [ ] Automated checks pass; production build succeeds
+- [x] Automated checks pass; production build succeeds
 
 ## Verification
 Unit + RLS + e2e suites; typecheck/lint/build; manual phone test; review for authorization implications.
+
+## Outcome
+All TASKS-001…012 done; migrations applied to production (TASKS-001/002; later tasks needed none); CI green; deployed. "Mobile experience efficient" waits for the manual phone test (automated: phone-layout e2e — no horizontal overflow, 44 px check targets).
 
 ## Definition of Done
 Tasks checked after verification; 03/TASKS docs updated to the implemented schema; deployed.
