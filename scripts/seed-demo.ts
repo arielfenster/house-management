@@ -2,8 +2,8 @@
 // (docs/05-UI-UX-GUIDELINES.md "Test data").
 //   npm run db:seed-demo     (local Supabase only; re-running recreates both demo accounts from scratch)
 // Log in at http://localhost:3000 as either member (local test values, not secrets):
-//   Ariel  ariel@gmail.com   / demo-password-local
-//   Noa    demo2@house.test  / demo-password-local
+//   Ariel  ariel@gmail.com   / arielfenster
+//   Noa    demo2@house.test  / arielfenster
 // Both accounts are deleted and recreated on every run, with everything in their household.
 // What you get: overdue / today / this week / later / undated tasks; one-time and repeating (daily → yearly);
 // assigned to Ariel, Noa or nobody; notes; long and Hebrew titles; extra categories and rooms; completed one-time
@@ -13,7 +13,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types.ts'
 import { addDays, localToday, type RecurrenceUnit } from '../shared/recurrence.ts'
 
-const PASSWORD = 'demo-password-local'
+const PASSWORD = 'arielfenster'
 const ARIEL = { email: 'ariel@gmail.com', name: 'Ariel' }
 const NOA = { email: 'demo2@house.test', name: 'Noa' }
 const TIMEZONE = 'Asia/Jerusalem'
