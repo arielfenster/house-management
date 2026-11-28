@@ -8,6 +8,7 @@
 // What you get: overdue / today / this week / later / undated tasks; one-time and repeating (daily → yearly);
 // assigned to Ariel, Noa or nobody; notes; long and Hebrew titles; extra categories and rooms; completed one-time
 // tasks (Done tab); completion history (on time, late, early, by both members) on several repeating tasks.
+// Shopping: the household's list with a few unsectioned items on top, five sections, Hebrew items and some ticked.
 import { existsSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types.ts'
@@ -107,6 +108,16 @@ const TASKS: DemoTask[] = [
   { title: 'Return the library books', due: -6, category: 'General', doneDaysAgo: 3, assignee: 'ariel' },
   { title: 'Fix the wobbly kitchen chair', due: null, category: 'Maintenance', room: 'Kitchen', doneDaysAgo: 8 },
   { title: 'להזמין טכנאי למזגן', due: -12, category: 'Maintenance', doneDaysAgo: 10, assignee: 'noa' },
+]
+
+// Shopping list: [section (null = the top area above the first section), items]; a leading "x " = already ticked.
+const SHOPPING: [section: string | null, items: string[]][] = [
+  [null, ['Batteries AA', 'x Birthday card for Dana']],
+  ['Produce', ['Tomatoes', 'Cucumbers', 'מלפפונים', 'x Bananas', 'Avocado ×3', 'Lemons', 'x Parsley']],
+  ['Dairy', ['Milk 3%', 'קוטג\'', 'x Yellow cheese', 'Greek yogurt', 'Butter']],
+  ['Bakery', ['Bread', 'x Pitas', 'חלה לשבת']],
+  ['Meat & fish', ['Chicken breast', 'Salmon fillet']],
+  ['Household', ['Dish soap', 'Toilet paper', 'x Trash bags', 'Sponges', 'Laundry detergent — the big one, not the travel size']],
 ]
 
 async function deleteDemoUsers() {
@@ -239,8 +250,37 @@ async function main() {
     }
   }
 
+  // Shopping: the list itself was created by create_household.
+  const { data: list, error: listError } = await admin.from('shopping_lists').select('id').eq('household_id', householdId).single()
+  if (listError) {
+    throw new Error(`shopping list: ${listError.message}`)
+  }
+  const sectionNames = SHOPPING.map(([name]) => name).filter(name => name !== null)
+  const { data: sections, error: sectionError } = await admin.from('shopping_sections').insert(sectionNames.map((name, i) => ({
+    list_id: list.id,
+    household_id: householdId,
+    name,
+    position: i + 1,
+  }))).select('id, name')
+  if (sectionError) {
+    throw new Error(`insert shopping sections: ${sectionError.message}`)
+  }
+  const items = SHOPPING.flatMap(([section, names]) => names.map((raw, i) => ({
+    list_id: list.id,
+    household_id: householdId,
+    section_id: section === null ? null : sections.find(s => s.name === section)?.id ?? null,
+    name: raw.replace(/^x /, ''),
+    checked: raw.startsWith('x '),
+    position: i + 1,
+  })))
+  const { error: itemError } = await admin.from('shopping_items').insert(items)
+  if (itemError) {
+    throw new Error(`insert shopping items: ${itemError.message}`)
+  }
+
   const open = TASKS.filter(t => t.doneDaysAgo === undefined).length
-  console.log(`Demo ready in "Our home" (${TIMEZONE}): ${open} open tasks, ${TASKS.length - open} done, ${completions.length} completions.`)
+  console.log(`Demo ready in "Our home" (${TIMEZONE}): ${open} open tasks, ${TASKS.length - open} done, ${completions.length} completions; `
+    + `${items.length} shopping items in ${sections.length} sections.`)
   console.log(`Log in as ${ARIEL.email} (Ariel) or ${NOA.email} (Noa), password "${PASSWORD}".`)
 }
 
