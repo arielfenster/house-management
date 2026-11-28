@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ShoppingCartIcon } from '@lucide/vue'
-import { useLocalStorage } from '@vueuse/core'
+import { useLocalStorage, usePreferredReducedMotion } from '@vueuse/core'
 
 // Shopping (features/SHOPPING.md): the household's list — items without a section on top, then each section
-// under a small heading; one tap ticks an item (optimistic, SHOP-004); fast entry bar kept in view at the top
+// under a small heading; one tap ticks an item off — it leaves the list and is deleted, with Undo (D22); fast entry bar kept in view at the top
 // (SHOP-005); sections created, renamed and deleted (with undo) inline (SHOP-006).
 // Item editing and reordering come in SHOP-007/008, realtime in SHOP-009.
 const {
@@ -18,7 +18,7 @@ const {
   pending,
   error,
   refresh,
-  setChecked,
+  completeItem,
 } = useShopping()
 
 // Section new items go to ('' = none), remembered on this device. Read after mount so the server-rendered select
@@ -26,6 +26,25 @@ const {
 const addTarget = useLocalStorage<string>('shopping-target-section', '', { initOnMounted: true })
 // Sections still being saved cannot take items yet (the insert would fail its foreign key).
 const savedSections = computed(() => sections.value.filter(s => !s.pending))
+
+// A ticked row collapses its height instead of vanishing, so the rows below slide up rather than jump.
+const reduceMotion = usePreferredReducedMotion()
+
+function collapse(el: Element, done: () => void) {
+  if (reduceMotion.value === 'reduce' || !(el instanceof HTMLElement)) {
+    done()
+    return
+  }
+  const animation = el.animate(
+    [
+      { height: `${el.offsetHeight}px`, opacity: 1 },
+      { height: '0px', opacity: 0 },
+    ],
+    { duration: 180, easing: 'ease-in' },
+  )
+  animation.onfinish = done
+  animation.oncancel = done
+}
 
 const loading = computed(() => pending.value && isEmpty.value)
 </script>
@@ -79,15 +98,16 @@ const loading = computed(() => pending.value && isEmpty.value)
             :rename="renameSection"
             @delete="deleteSection(group.section)"
           />
-          <ul v-if="group.items.length">
+          <!-- Kept mounted when empty so the last row can still animate out. -->
+          <TransitionGroup tag="ul" :css="false" @leave="collapse">
             <ShoppingItemRow
               v-for="item in group.items"
               :key="item.id"
               :item="item"
-              @toggle="setChecked(item, $event)"
+              @done="completeItem(item)"
             />
-          </ul>
-          <p v-else class="px-3 py-2.5 text-xs text-muted-foreground">
+          </TransitionGroup>
+          <p v-if="!group.items.length" class="px-3 py-2.5 text-xs text-muted-foreground">
             No items
           </p>
         </section>

@@ -15,7 +15,6 @@ export interface ShoppingItem {
   /** null = the top area above the first section. */
   sectionId: string | null
   name: string
-  checked: boolean
   position: number
   /** Optimistic row whose insert has not finished yet. */
   pending?: boolean
@@ -28,6 +27,9 @@ export interface ShoppingGroup {
 }
 
 const UNDO_TOAST_MS = 8000
+/** Ticked-item toast: one toast (fixed id) replaced by each tick, so fast shopping never stacks toasts. */
+const DONE_TOAST_ID = 'shopping-done'
+const DONE_TOAST_MS = 5000
 
 interface ShoppingData {
   listId: string | null
@@ -74,7 +76,7 @@ export function useShopping() {
       }
       const [sections, items] = await Promise.all([
         supabase.from('shopping_sections').select('id, name, position').eq('list_id', list.id),
-        supabase.from('shopping_items').select('id, section_id, name, checked, position').eq('list_id', list.id),
+        supabase.from('shopping_items').select('id, section_id, name, position').eq('list_id', list.id),
       ])
       if (sections.error || items.error) {
         throw createError({ statusCode: 500, statusMessage: 'Could not load the shopping list.' })
@@ -86,7 +88,6 @@ export function useShopping() {
           id: row.id,
           sectionId: row.section_id,
           name: row.name,
-          checked: row.checked,
           position: row.position,
         })),
       }
@@ -142,37 +143,93 @@ export function useShopping() {
   })
 
   const isEmpty = computed(() => items.value.length === 0 && sections.value.length === 0)
-  const remaining = computed(() => items.value.filter(i => !i.checked).length)
+  const remaining = computed(() => items.value.length)
 
-  function patchItem(id: string, fields: Partial<ShoppingItem>) {
+  function removeLocal(id: string) {
     data.value = {
       ...data.value,
-      items: data.value.items.map((item) => {
-        if (item.id !== id) {
-          return item
-        }
-        return {
-          ...item,
-          ...fields,
-        }
-      }),
+      items: data.value.items.filter(i => i.id !== id),
     }
   }
 
-  // Taps on the same item may overlap: only the latest one's failure rolls back (an older failure would undo it).
-  const toggleVersion = new Map<string, number>()
-
-  /** Ticks or un-ticks an item at once, then saves; rolls back with a toast if saving fails. */
-  async function setChecked(item: ShoppingItem, checked: boolean) {
-    const version = (toggleVersion.get(item.id) ?? 0) + 1
-    toggleVersion.set(item.id, version)
-    patchItem(item.id, { checked })
-
-    const { error: updateError } = await supabase.from('shopping_items').update({ checked }).eq('id', item.id)
-    if (updateError && toggleVersion.get(item.id) === version) {
-      patchItem(item.id, { checked: !checked })
-      toast.error(`Could not update “${item.name}”. Please try again.`)
+  function restoreLocal(item: ShoppingItem) {
+    data.value = {
+      ...data.value,
+      items: [...data.value.items.filter(i => i.id !== item.id), item],
     }
+  }
+
+  // The last ticked item, for Undo. `deleted` settles when its delete has finished (undo must not race it).
+  let lastDone: { item: ShoppingItem, deleted: Promise<boolean> } | null = null
+
+  async function deleteItemRow(item: ShoppingItem): Promise<boolean> {
+    const { error: deleteError } = await supabase.from('shopping_items').delete().eq('id', item.id)
+    if (deleteError) {
+      restoreLocal(item)
+      // The row is back, so its Undo toast has nothing to undo.
+      if (lastDone?.item.id === item.id) {
+        lastDone = null
+        toast.dismiss(DONE_TOAST_ID)
+      }
+      toast.error(`Could not remove “${item.name}”. Please try again.`)
+      return false
+    }
+    return true
+  }
+
+  /** Puts the last ticked item back where it was (its section, or the top area if that section is gone). */
+  async function undoDone() {
+    const done = lastDone
+    lastDone = null
+    toast.dismiss(DONE_TOAST_ID)
+    if (!done || !(await done.deleted) || !data.value.listId || !householdId.value) {
+      return
+    }
+    const sectionId = done.item.sectionId && sections.value.some(s => s.id === done.item.sectionId)
+      ? done.item.sectionId
+      : null
+    const item = {
+      ...done.item,
+      sectionId,
+    }
+    restoreLocal(item)
+    const { error: insertError } = await supabase.from('shopping_items').insert({
+      id: item.id,
+      list_id: data.value.listId,
+      household_id: householdId.value,
+      section_id: item.sectionId,
+      name: item.name,
+      position: item.position,
+    })
+    if (insertError) {
+      removeLocal(item.id)
+      toast.error(`Could not bring back “${item.name}”.`)
+    }
+  }
+
+  /**
+   * Ticking an item removes it from the list and deletes it (features/SHOPPING.md §6, D22): a bought item is no
+   * use on the list, and the other member sees it gone at once. One toast, updated per tick, undoes the latest.
+   */
+  function completeItem(item: ShoppingItem) {
+    if (item.pending) {
+      return
+    }
+    removeLocal(item.id)
+    lastDone = {
+      item,
+      deleted: deleteItemRow(item),
+    }
+    toast(`✓ ${item.name}`, {
+      id: DONE_TOAST_ID,
+      duration: DONE_TOAST_MS,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          void undoDone()
+        },
+      },
+    })
   }
 
   /**
@@ -192,7 +249,6 @@ export function useShopping() {
         id: crypto.randomUUID(),
         sectionId,
         name,
-        checked: false,
         position,
         pending: true,
       }
@@ -380,6 +436,6 @@ export function useShopping() {
     pending,
     error,
     refresh,
-    setChecked,
+    completeItem,
   }
 }

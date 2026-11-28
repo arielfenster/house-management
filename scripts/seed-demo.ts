@@ -8,7 +8,7 @@
 // What you get: overdue / today / this week / later / undated tasks; one-time and repeating (daily → yearly);
 // assigned to Ariel, Noa or nobody; notes; long and Hebrew titles; extra categories and rooms; completed one-time
 // tasks (Done tab); completion history (on time, late, early, by both members) on several repeating tasks.
-// Shopping: the household's list with a few unsectioned items on top, five sections, Hebrew items and some ticked.
+// Shopping: the household's list with a few unsectioned items on top, five sections and Hebrew items.
 import { existsSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types.ts'
@@ -110,14 +110,14 @@ const TASKS: DemoTask[] = [
   { title: 'להזמין טכנאי למזגן', due: -12, category: 'Maintenance', doneDaysAgo: 10, assignee: 'noa' },
 ]
 
-// Shopping list: [section (null = the top area above the first section), items]; a leading "x " = already ticked.
+// Shopping list: [section (null = the top area above the first section), items]. Ticked items are deleted (D22).
 const SHOPPING: [section: string | null, items: string[]][] = [
-  [null, ['Batteries AA', 'x Birthday card for Dana']],
-  ['Produce', ['Tomatoes', 'Cucumbers', 'מלפפונים', 'x Bananas', 'Avocado ×3', 'Lemons', 'x Parsley']],
-  ['Dairy', ['Milk 3%', 'קוטג\'', 'x Yellow cheese', 'Greek yogurt', 'Butter']],
-  ['Bakery', ['Bread', 'x Pitas', 'חלה לשבת']],
+  [null, ['Batteries AA', 'Birthday card for Dana']],
+  ['Produce', ['Tomatoes', 'Cucumbers', 'מלפפונים', 'Bananas', 'Avocado ×3', 'Lemons', 'Parsley']],
+  ['Dairy', ['Milk 3%', 'קוטג\'', 'Yellow cheese', 'Greek yogurt', 'Butter']],
+  ['Bakery', ['Bread', 'Pitas', 'חלה לשבת']],
   ['Meat & fish', ['Chicken breast', 'Salmon fillet']],
-  ['Household', ['Dish soap', 'Toilet paper', 'x Trash bags', 'Sponges', 'Laundry detergent — the big one, not the travel size']],
+  ['Household', ['Dish soap', 'Toilet paper', 'Trash bags', 'Sponges', 'Laundry detergent — the big one, not the travel size']],
 ]
 
 async function deleteDemoUsers() {
@@ -265,12 +265,11 @@ async function main() {
   if (sectionError) {
     throw new Error(`insert shopping sections: ${sectionError.message}`)
   }
-  const items = SHOPPING.flatMap(([section, names]) => names.map((raw, i) => ({
+  const items = SHOPPING.flatMap(([section, names]) => names.map((name, i) => ({
     list_id: list.id,
     household_id: householdId,
     section_id: section === null ? null : sections.find(s => s.name === section)?.id ?? null,
-    name: raw.replace(/^x /, ''),
-    checked: raw.startsWith('x '),
+    name,
     position: i + 1,
   })))
   const { error: itemError } = await admin.from('shopping_items').insert(items)

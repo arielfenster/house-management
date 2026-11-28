@@ -74,3 +74,6 @@ Spike result: **keep `@vite-pwa/nuxt`** (2.0.4, depends on `@nuxt/kit ^4.6.4`; t
 
 ## Still open
 - None.
+
+### D22 — Shopping: ticking an item deletes it (2026-11-28)
+Bought items are no use on the list, so ticking removes the row and deletes it immediately (no checked state, no "Clear completed"). Immediate delete rather than delete-after-undo-window: when two members split up in a store, the other phone should see the item gone at once (realtime). Undo (one reused toast, latest item only) re-inserts the row with the same id/section/position, which the client-supplied id allows. `shopping_items.checked` is left in place, unused. Trade-off: no purchase history; add a small history table later if suggestions ("you often buy…") are wanted.
